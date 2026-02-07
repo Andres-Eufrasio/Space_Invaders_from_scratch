@@ -2,18 +2,18 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 
-typedef struct player
+typedef struct Player
 {
     float x;
     float y;
-};
+}Player;
   
 
 typedef struct alien{
     float x;
     float y;
 
-};
+}alien;
 
 
 typedef struct bullet
@@ -21,19 +21,19 @@ typedef struct bullet
     int direction;
     float x;
     float y;
-};
+}bullet;
 
 
 typedef struct defence_block
 {
     float x;
     float y;
-};
+}defence_block;
 
 typedef struct score
 {
     int points;
 
-};
+}score;
 
 
