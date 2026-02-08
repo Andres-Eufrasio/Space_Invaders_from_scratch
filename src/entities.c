@@ -9,11 +9,12 @@ typedef struct Player
 }Player;
   
 
-typedef struct alien{
+typedef struct Alien{
     float x;
     float y;
+    bool alive;
 
-}alien;
+}Alien;
 
 
 typedef struct bullet
