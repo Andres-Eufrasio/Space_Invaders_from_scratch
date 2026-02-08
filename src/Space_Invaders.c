@@ -3,21 +3,26 @@
 //#include <SDL_image.h>
 #include "entities.c"
 #define GAME_NAME "Space invaders"
+//screen size
 #define WIDTH 650
 #define HEIGHT 650
+
 #define PIXEL_FORMAT SDL_PIXELFORMAT_RGBA8888
-#define CENTERE_X WIDTH/2
-#define CENTERE_Y HEIGHT/2
-#define PLAYER_MOVE_SPEED 5
 #define FPS 60
 #define FRAME_TIME 1000 / FPS
 
-#define ALIEN_ROW 6
+#define CENTERE_X WIDTH/2
+#define CENTERE_Y HEIGHT/2
+#define PLAYER_MOVE_SPEED 5
+
+#define ALIEN_ROW 5
 #define ALIEN_COL 11
 #define ALIEN_X 120
 #define ALIEN_Y 70
 #define ALIEN_SPACE_X 40
 #define ALIEN_SPACE_Y 40
+#define ALIEN_SIZE 20
+
 /*A Space invaders clone built from scratch
 By Andres Eufrasio Tinajero
 created 06/02/06
@@ -29,7 +34,14 @@ created 06/02/06
 
 
 Player player = {CENTERE_X, CENTERE_Y + (CENTERE_Y*0.75)};
+PlayerBullet player_bullet;
 Alien ** aliens;
+int alien_start = 0;
+int alien_end = ALIEN_COL-1;
+
+
+
+
 typedef struct SDL_Instances{
     SDL_Window * window;
     SDL_Renderer * renderer;
@@ -80,6 +92,7 @@ void draw_player(SDL_Renderer * renderer){
 void create_aliens(){
     int alien_x = ALIEN_X;
     int alien_y = ALIEN_Y;
+    
     // change to unsigned char
     aliens = (Alien **)malloc(ALIEN_ROW * sizeof(Alien *));
     if (!aliens){
@@ -95,6 +108,12 @@ void create_aliens(){
         alien_y += ALIEN_SPACE_Y;
         alien_x = ALIEN_X;
     }
+    
+};
+
+void update_aliens(){
+
+
 };
 
 void render_aliens(SDL_Renderer * renderer){
@@ -102,9 +121,10 @@ void render_aliens(SDL_Renderer * renderer){
     SDL_SetRenderDrawColor(renderer,255,255,255,255);
     
     for (int y=0; y<ALIEN_ROW; y++){
-        for (int x=0; x<ALIEN_COL; x++){
+        for (int x=0; x<=alien_end; x++){
             if (aliens[y][x].alive){
-                SDL_Rect alien_box= {aliens[y][x].x, aliens[y][x].y, 20, 20 };
+                
+                SDL_Rect alien_box= {aliens[y][x].x, aliens[y][x].y, ALIEN_SIZE, ALIEN_SIZE };
                 SDL_RenderFillRect(renderer, &alien_box);
                 SDL_RenderDrawRect(renderer, &alien_box);
                 }
@@ -112,8 +132,87 @@ void render_aliens(SDL_Renderer * renderer){
     }
 };
 
-void shoot(){
+int player_shoot(){
+    if (player_bullet.alive){
+        return 0;
+    }
+    
+    player_bullet.alive = true;
+    player_bullet.x = player.x - 3;
+    player_bullet.y = player.y; 
     //player.x player.y
+    return 1;
+};
+
+int update_bullet(SDL_Renderer * renderer){
+    if (!player_bullet.alive){
+        return 0;
+    }
+
+    player_bullet.y -= 10;
+    if (player_bullet.y < 0){
+        player_bullet.alive = false;
+    }
+    //draw
+    SDL_Rect bullet_box= {player_bullet.x, player_bullet.y, 10 ,20 };
+    SDL_SetRenderDrawColor(renderer,255,255,255,255);
+    SDL_RenderFillRect(renderer, &bullet_box);
+    SDL_RenderDrawRect(renderer, &bullet_box);
+    //printf("%d",player.y);
+    return 1;
+};
+
+
+
+
+
+void collision(){
+    {
+        for (int y=0; y<ALIEN_ROW; y++){ 
+            for (int x=0; x<ALIEN_COL; x++){
+                //if line broken
+                if (aliens[y][x].alive && player_bullet.x - aliens[y][x].x > -10 && player_bullet.x - aliens[y][x].x < 20 && player_bullet.y - aliens[y][x].y -5 < 0){
+                    player_bullet.alive = false;
+                    aliens[y][x].alive = false;
+                }
+
+
+            }
+        }
+    }
+    
+};
+
+void update_alien_length(){
+    bool left_alive = false;
+    bool right_alive = false;
+    for (int y = 0; y < ALIEN_ROW; y++) {
+        if (aliens[y][alien_start].alive) {
+            left_alive = true;
+            break;
+        }
+    }
+    for (int y = 0; y < ALIEN_ROW; y++) {
+        if (aliens[y][alien_end].alive) {
+            right_alive = true;
+            break;
+        }
+    }
+
+    if (!left_alive) {
+        alien_start++;
+        
+    }
+    if (!right_alive) {
+        alien_end--;
+        
+    }
+};
+
+void update(){
+    collision();
+    update_alien_length();
+
 };
 
 int main(int argc, char * argv[]){
@@ -142,7 +241,9 @@ int main(int argc, char * argv[]){
     int shoot_time = 0;
     int move_left_speed=PLAYER_MOVE_SPEED;
     int move_right_speed=PLAYER_MOVE_SPEED;
-
+    player_bullet.alive=false;
+    player_bullet.x=10;
+    player_bullet.y=10;
     
     while(1){
         SDL_Event e;
@@ -195,13 +296,17 @@ int main(int argc, char * argv[]){
             move_right_speed =0;
         }
         else{move_right_speed = PLAYER_MOVE_SPEED;}
+        
 
         
 
         // start frame
         Uint32 frameStart = SDL_GetTicks();
-        if (plyrctrl.up){
+        
+        update();
 
+        if (plyrctrl.up){
+            player_shoot();
         }
         if (plyrctrl.left){
             player.x-=move_left_speed;
@@ -212,7 +317,11 @@ int main(int argc, char * argv[]){
         
         SDL_SetRenderTarget(renderer, texture);
         SDL_RenderClear(renderer);
+
+
+        
         render_background(renderer);
+        update_bullet(renderer);
         draw_player(renderer);
         render_aliens(renderer);
 

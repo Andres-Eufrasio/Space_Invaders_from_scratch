@@ -2,6 +2,8 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 
+
+
 typedef struct Player
 {
     float x;
@@ -13,16 +15,16 @@ typedef struct Alien{
     float x;
     float y;
     bool alive;
-
 }Alien;
 
 
-typedef struct bullet
+
+typedef struct PlayerBullet
 {
-    int direction;
     float x;
     float y;
-}bullet;
+    bool alive;
+}PlayerBullet;
 
 
 typedef struct defence_block
