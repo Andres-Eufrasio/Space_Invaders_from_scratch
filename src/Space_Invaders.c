@@ -27,6 +27,11 @@
 By Andres Eufrasio Tinajero
 created 06/02/06
 
+TODO:
+ADD LOSING LIFE
+ADD MULTIPLE LIVES
+ADD TOP SPACESHIP FOR EXTRA POINTS
+ADD SHIELDS
 */
 
 
@@ -111,10 +116,7 @@ void create_aliens(){
     
 };
 
-void update_aliens(){
 
-
-};
 
 void render_aliens(SDL_Renderer * renderer){
     
@@ -165,23 +167,51 @@ int update_bullet(SDL_Renderer * renderer){
 
 
 
-
-void collision(){
+int alien_direction = -1;
+float alien_speed = 0.2;
+int collision(){
     {
         for (int y=0; y<ALIEN_ROW; y++){ 
-            for (int x=0; x<ALIEN_COL; x++){
-                //if line broken
+            for (int x=alien_start; x<=alien_end; x++){
+                //Collision
                 if (aliens[y][x].alive && player_bullet.x - aliens[y][x].x > -10 && player_bullet.x - aliens[y][x].x < 20 && player_bullet.y - aliens[y][x].y -5 < 0){
                     player_bullet.alive = false;
                     aliens[y][x].alive = false;
-                }
-
-
+                    player_bullet.x = player.x - 3;
+                    player_bullet.y = player.y; 
+                    return 0;
+                } 
             }
         }
     }
-    
+
 };
+
+int new_line_flag = 0;
+void update_alien_position(){
+    if (aliens[0][alien_start].x <= 0 ||aliens[0][alien_end].x >= WIDTH - 20){
+        alien_direction *= -1;
+        alien_speed += 0.2;
+        new_line_flag = 1;
+        
+    }
+    
+    for (int y=0; y<ALIEN_ROW; y++){ 
+        for (int x=alien_start; x<=alien_end; x++){
+            aliens[y][x].x += alien_direction*alien_speed;
+        }
+    if(new_line_flag)
+        for (int y=0; y<ALIEN_ROW; y++){ 
+            for (int x=alien_start; x<=alien_end; x++){
+                aliens[y][x].y += 20;
+            }
+            
+        }
+        new_line_flag = 0;
+    }
+    
+
+}
 
 void update_alien_length(){
     bool left_alive = false;
@@ -210,6 +240,7 @@ void update_alien_length(){
 };
 
 void update(){
+    update_alien_position();
     collision();
     update_alien_length();
 
@@ -287,12 +318,12 @@ int main(int argc, char * argv[]){
         }
 
         // calc if player on edge
-        if (player.x<50){
+        if (player.x<=0){
             move_left_speed =0;
             
         }
         else{move_left_speed = PLAYER_MOVE_SPEED;}
-        if (player.x>WIDTH-50){
+        if (player.x>WIDTH-25){
             move_right_speed =0;
         }
         else{move_right_speed = PLAYER_MOVE_SPEED;}
@@ -303,7 +334,7 @@ int main(int argc, char * argv[]){
         // start frame
         Uint32 frameStart = SDL_GetTicks();
         
-        update();
+        
 
         if (plyrctrl.up){
             player_shoot();
@@ -317,11 +348,13 @@ int main(int argc, char * argv[]){
         
         SDL_SetRenderTarget(renderer, texture);
         SDL_RenderClear(renderer);
-
+        
 
         
         render_background(renderer);
         update_bullet(renderer);
+        update();
+        
         draw_player(renderer);
         render_aliens(renderer);
 
