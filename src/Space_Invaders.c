@@ -1,6 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <SDL2/SDL.h>
-//#include <SDL_image.h>
+#include <time.h>
 #include "entities.c"
 #define GAME_NAME "Space invaders"
 //screen size
@@ -22,12 +23,16 @@
 #define ALIEN_SPACE_X 40
 #define ALIEN_SPACE_Y 40
 #define ALIEN_SIZE 20
+// seen as 1 / ALIEN_SHOOT_CHANGE
+#define ALIEN_SHOOT_CHANGE 500
+
 
 /*A Space invaders clone built from scratch
 By Andres Eufrasio Tinajero
 created 06/02/06
 
 TODO:
+ADD ALIEN SHOOTING
 ADD LOSING LIFE
 ADD MULTIPLE LIVES
 ADD TOP SPACESHIP FOR EXTRA POINTS
@@ -66,6 +71,27 @@ typedef struct Controller{
 
 struct SDL_Instances sdlin_t;
 
+
+int generate_alien_shooter(){
+    int alien_x = rand() % alien_end + alien_start;
+    for (int y=ALIEN_ROW; y>0; y--){
+        if (aliens[alien_x][y].alive){
+
+        }
+    }
+}
+
+int does_alien_shoot(){
+    int random = rand() % ALIEN_SHOOT_CHANGE;
+    if (1 == random){
+        return 1;
+    }
+    return 0;
+}
+
+void alien_shoot(){
+    
+}
 
 void shutdown(){
     SDL_DestroyTexture(sdlin_t.texture);
@@ -142,7 +168,6 @@ int player_shoot(){
     player_bullet.alive = true;
     player_bullet.x = player.x - 3;
     player_bullet.y = player.y; 
-    //player.x player.y
     return 1;
 };
 
@@ -160,7 +185,6 @@ int update_bullet(SDL_Renderer * renderer){
     SDL_SetRenderDrawColor(renderer,255,255,255,255);
     SDL_RenderFillRect(renderer, &bullet_box);
     SDL_RenderDrawRect(renderer, &bullet_box);
-    //printf("%d",player.y);
     return 1;
 };
 
@@ -169,23 +193,31 @@ int update_bullet(SDL_Renderer * renderer){
 
 int alien_direction = -1;
 float alien_speed = 0.2;
+
+
+
 int collision(){
-    {
-        for (int y=0; y<ALIEN_ROW; y++){ 
-            for (int x=alien_start; x<=alien_end; x++){
-                //Collision
-                if (aliens[y][x].alive && player_bullet.x - aliens[y][x].x > -10 && player_bullet.x - aliens[y][x].x < 20 && player_bullet.y - aliens[y][x].y -5 < 0){
-                    player_bullet.alive = false;
-                    aliens[y][x].alive = false;
-                    player_bullet.x = player.x - 3;
-                    player_bullet.y = player.y; 
-                    return 0;
-                } 
+    for (int y = 0; y < ALIEN_ROW; y++){ 
+        for (int x = alien_start; x <= alien_end; x++){
+            if (!player_bullet.alive || !aliens[y][x].alive) {
+                continue;
+            }
+            
+            // overlap
+            int dx = player_bullet.x - aliens[y][x].x;
+            int dy = player_bullet.y - aliens[y][x].y;
+            
+            if (dx > -10 && dx < 20 && dy > -20 && dy < 20) {
+                player_bullet.alive = false;
+                aliens[y][x].alive = false;
+                player_bullet.x = player.x - 3;
+                player_bullet.y = player.y;
+                return 1;
             }
         }
     }
-
-};
+    return 0;
+}
 
 int new_line_flag = 0;
 void update_alien_position(){
@@ -237,16 +269,33 @@ void update_alien_length(){
         alien_end--;
         
     }
+    //call recursively until the right lenght is created
+    if (!left_alive || !right_alive){
+        update_alien_length();
+    }
+    
 };
+
+
 
 void update(){
     update_alien_position();
-    collision();
-    update_alien_length();
+    if (collision()){
+        update_alien_length();
+        if(alien_end < alien_start){
+            shutdown();
+        }
+    }
+    if(does_alien_shoot()){
+        generate_alien_shooter();
+    }
+    
+    
 
 };
 
 int main(int argc, char * argv[]){
+    srand(time(0));
     SDL_Init(SDL_INIT_AUDIO);
     SDL_Init(SDL_INIT_VIDEO);
     SDL_Window * window = sdlin_t.window;
@@ -265,7 +314,7 @@ int main(int argc, char * argv[]){
 
     
 
-
+    
     //controler
     Controller plyrctrl = {false, false, false};
     
@@ -352,11 +401,13 @@ int main(int argc, char * argv[]){
 
         
         render_background(renderer);
-        update_bullet(renderer);
+        
         update();
+        update_bullet(renderer);
+        render_aliens(renderer);
         
         draw_player(renderer);
-        render_aliens(renderer);
+        
 
 
         SDL_SetRenderTarget(renderer, NULL);
