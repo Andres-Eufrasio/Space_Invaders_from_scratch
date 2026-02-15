@@ -1,17 +1,21 @@
+#ifndef ENTITIES_H
+#define ENTITIES_H
+
+
+
 #include <stdio.h>
-#include <SDL2/SDL.h>
 #include <stdbool.h>
 
 
 
-typedef struct Player
+typedef struct
 {
     float x;
     float y;
 }Player;
   
 
-typedef struct Alien{
+typedef struct{
     float x;
     float y;
     bool alive;
@@ -19,24 +23,32 @@ typedef struct Alien{
 
 
 
-typedef struct PlayerBullet
+typedef struct
 {
     float x;
     float y;
     bool alive;
 }PlayerBullet;
 
+typedef struct 
+{
+    float x;
+    float y;
+    bool alive;
+}AlienBullet;
 
-typedef struct defence_block
+
+typedef struct
 {
     float x;
     float y;
 }defence_block;
 
-typedef struct score
+typedef struct
 {
     int points;
 
 }score;
 
 
+#endif
