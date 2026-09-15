@@ -1,8 +1,6 @@
 #ifndef ENTITIES_H
 #define ENTITIES_H
 
-
-
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -20,7 +18,6 @@ typedef struct{
     float y;
     bool alive;
 }Alien;
-
 
 
 typedef struct
@@ -49,6 +46,15 @@ typedef struct
     int points;
 
 }score;
+
+typedef struct
+{
+    int x;
+    int y;
+    int w;
+    int h;
+
+}rectangle;
 
 
 #endif

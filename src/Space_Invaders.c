@@ -5,7 +5,7 @@
 #include "entities.h"
 #define GAME_NAME "Space invaders"
 //screen size
-#define WIDTH 650
+#define WIDTH 700
 #define HEIGHT 650
 
 #define PIXEL_FORMAT SDL_PIXELFORMAT_RGBA8888
@@ -28,7 +28,7 @@
 #define MAX_ALIEN_BULLETS 6
 #define BULLET_SPEED 10
 #define BULLET_HEIGHT 20
-#define BULLET_WIDTH 10
+#define BULLET_WIDTH 2
 
 
 /*A Space invaders clone built from scratch
@@ -65,7 +65,14 @@ typedef struct Controller{
     bool up;
 }Controller;
 
-
+rectangle calculate_square_from_center(float ox, float oy, int w, int h){
+    rectangle rect;
+    rect.x = (int)ox-w / 2.0f;
+    rect.y = (int)oy-h / 2.0f;
+    rect.w = w;
+    rect.h = h;
+    return rect;
+}
 
 //fix this logic it's trash and inneficent
 Alien generate_alien_shooter(){
@@ -149,27 +156,49 @@ void update_alien_bullet(SDL_Renderer * renderer){
     }
 }
 
+void update_alien_bullet_animation(){
+    
+}
+
 
 void render_background(SDL_Renderer * renderer){
-    SDL_Rect * background = {0, 0, WIDTH, HEIGHT};
-    SDL_RenderDrawRect(renderer, background);
+    SDL_Rect background = {0, 0, WIDTH, HEIGHT};
+    SDL_RenderDrawRect(renderer, &background);
     SDL_SetRenderDrawColor(renderer,0,0,20,255);
-    SDL_RenderFillRect(renderer, background);
+    SDL_RenderFillRect(renderer, &background);
 }
 
 void draw_player(SDL_Renderer * renderer){
-    float size = 0.1;
     SDL_SetRenderDrawColor(renderer,0,255,0,255);
 
-    SDL_Rect player_body = {(int)player.x-20, player.y-10, 40, 20};
-    SDL_Rect player_gun = {(int)player.x-5, player.y-18,10,10};
+    rectangle pbb = calculate_square_from_center(player.x, player.y, 48, 15);
+    rectangle pb  = calculate_square_from_center(player.x, player.y, 40, 15);
+    rectangle pgb = calculate_square_from_center(player.x, player.y, 10, 10);
+    rectangle pgh = calculate_square_from_center(player.x, player.y, 3, 5);
+    // Render player Body
+    SDL_Rect player_body_bottom = {pbb.x, pbb.y, pbb.w, pbb.h};
+    SDL_Rect player_body = {pb.x, pb.y-3, pb.w, pb.h};
+
+    SDL_RenderFillRect(renderer, &player_body_bottom);
+    SDL_RenderDrawRect(renderer, &player_body_bottom);
 
     SDL_RenderFillRect(renderer, &player_body);
-    SDL_RenderFillRect(renderer, &player_gun);
     SDL_RenderDrawRect(renderer, &player_body);
-    SDL_RenderDrawRect(renderer, &player_gun);
+
+    // Render player gun
+
+    SDL_Rect player_gun_base = {pgb.x, pgb.y-13, pgb.w, pgb.h};
+    SDL_RenderFillRect(renderer, &player_gun_base);
+    SDL_RenderDrawRect(renderer, &player_gun_base);   
+
+    SDL_Rect player_gun_head = {pgh.x, pgh.y-18, pgh.w, pgh.h};
+    SDL_RenderFillRect(renderer, &player_gun_head);
+    SDL_RenderDrawRect(renderer, &player_gun_head);
+
+    
 
 }
+
 
 void create_aliens(){
     int alien_x = ALIEN_X;
@@ -217,7 +246,7 @@ int player_shoot(){
     }
     
     player_bullet.alive = true;
-    player_bullet.x = player.x - 3;
+    player_bullet.x = player.x - 2;
     player_bullet.y = player.y; 
     return 1;
 };
