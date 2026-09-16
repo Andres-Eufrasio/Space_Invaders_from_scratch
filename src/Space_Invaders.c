@@ -22,13 +22,13 @@
 #define ALIEN_Y 70
 #define ALIEN_SPACE_X 40
 #define ALIEN_SPACE_Y 40
-#define ALIEN_SIZE 20
+#define ALIEN_SIZE 30
 // seen as 1 / ALIEN_SHOOT_CHANGE
 #define ALIEN_SHOOT_CHANGE 100
 #define MAX_ALIEN_BULLETS 6
 #define BULLET_SPEED 10
 #define BULLET_HEIGHT 20
-#define BULLET_WIDTH 2
+#define BULLET_WIDTH 3
 
 
 /*A Space invaders clone built from scratch
@@ -47,7 +47,7 @@ SWITCH TO DELTA TIME
 
 
 
-Player player = {CENTERE_X, CENTERE_Y + (CENTERE_Y*0.75)};
+Player player = {CENTERE_X, CENTERE_Y + (CENTERE_Y*0.8)};
 PlayerBullet player_bullet;
 
 
@@ -62,7 +62,7 @@ int alien_end = ALIEN_COL-1;
 typedef struct Controller{
     bool left;
     bool right;
-    bool up;
+    bool shoot;
 }Controller;
 
 rectangle calculate_square_from_center(float ox, float oy, int w, int h){
@@ -223,6 +223,78 @@ void create_aliens(){
 };
 
 
+    
+void render_triangle_alien(SDL_Renderer *renderer, float ox, float oy)
+{
+    SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
+    ox = (int)ox;
+    oy = (int)oy;
+
+    //middle of the alien
+    int mx = ox + ALIEN_SIZE / 2;
+
+    rectangle l1 = calculate_square_from_center(mx, oy, 8 , 10 );
+    rectangle l2 = calculate_square_from_center(mx, oy,  14, 10 );
+    rectangle l3 = calculate_square_from_center(mx, oy, 20, 10 );
+    rectangle l4 = calculate_square_from_center(mx, oy,26, 8);
+
+    SDL_Rect body[] = {
+        { l1.x, oy+1, l1.w, l1.h },
+        { l2.x, oy+4, l2.w, l2.h },
+        { l3.x, oy+6, l3.w, l3.h },
+        { l4.x, oy+9, l4.w, l4.h }
+    };
+
+    for (int i = 0; i < 4; i++)
+        SDL_RenderFillRect(renderer, &body[i]);
+
+    SDL_Rect legs_frame1[] = {
+        { mx - 12 + 6,  oy + 17, 3, 3 },
+        { mx - 12 + 15, oy + 17, 3, 3 },
+
+        { mx - 12 + 3,  oy + 20, 3, 3 },
+        { mx - 12 + 9,  oy + 20, 3, 3 },
+        { mx - 12 + 12, oy + 20, 3, 3 },
+        { mx - 12 + 18, oy + 20, 3, 3 },
+
+        { mx - 12,      oy + 23, 3, 3 },
+        { mx - 12 + 6,  oy + 23, 3, 3 },
+        { mx - 12 + 15, oy + 23, 3, 3 },
+        { mx - 12 + 21, oy + 23, 3, 3 }
+    };
+
+
+    SDL_Rect legs[] = {
+        { mx - 12 + 3,  oy + 17, 3, 3 },
+        { mx - 12 + 9,  oy + 17, 3, 3 },
+        { mx - 12 + 12, oy + 17, 3, 3 },
+        { mx - 12 + 18,  oy + 17, 3, 3 },
+
+        { mx - 12 + 0,  oy + 20, 3, 3 },
+        { mx - 12 + 21,  oy + 20, 3, 3 },
+
+
+        { mx - 12 + 3,      oy + 23, 3, 3 },
+        { mx - 12 + 18,  oy + 23, 3, 3 },
+
+    };
+
+    for (int i = 0; i < 8; i++)
+        SDL_RenderFillRect(renderer, &legs[i]);
+
+
+    // color of eyes
+    SDL_SetRenderDrawColor(renderer,0,0,20,255);
+    SDL_Rect eyes[] = {
+        { mx - 12 + 6,  oy + 12, 3, 3 },
+        { mx - 12 + 15,  oy + 12, 3, 3 },
+    };
+
+    for (int i = 0; i < 2; i++)
+        SDL_RenderFillRect(renderer, &eyes[i]);
+ 
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+}
 
 void render_aliens(SDL_Renderer * renderer){
     
@@ -233,12 +305,17 @@ void render_aliens(SDL_Renderer * renderer){
             if (aliens[y][x].alive){
                 
                 SDL_Rect alien_box= {aliens[y][x].x, aliens[y][x].y, ALIEN_SIZE, ALIEN_SIZE };
-                SDL_RenderFillRect(renderer, &alien_box);
-                SDL_RenderDrawRect(renderer, &alien_box);
+                //SDL_RenderFillRect(renderer, &alien_box);
+                //SDL_RenderDrawRect(renderer, &alien_box);
+                
+                render_triangle_alien(renderer,aliens[y][x].x,aliens[y][x].y);
                 }
         }
     }
 };
+
+
+
 
 int player_shoot(){
     if (player_bullet.alive){
@@ -247,7 +324,7 @@ int player_shoot(){
     
     player_bullet.alive = true;
     player_bullet.x = player.x - 2;
-    player_bullet.y = player.y; 
+    player_bullet.y = player.y -2; 
     return 1;
 };
 
@@ -300,6 +377,11 @@ void update_alien_length(){
     
 };
 
+//gives slightly extra reach on hit box
+#define ALIEN_COLLISION_LEFT -2
+#define ALIEN_COLLISION_TOP -5
+
+
 int alien_direction = -1;
 float alien_speed = 0.2;
 void collision(){
@@ -316,7 +398,7 @@ void collision(){
                 int dx = player_bullet.x - aliens[y][x].x;
                 
                 
-                if (dx > -10 && dx < 20 && dy > -20 && dy < 20) {
+                if (dx > ALIEN_COLLISION_LEFT && dx < ALIEN_SIZE && dy > ALIEN_COLLISION_TOP && dy < ALIEN_SIZE) {
                     player_bullet.alive = false;
                     aliens[y][x].alive = false;
                     player_bullet.x = player.x - 3;
@@ -398,7 +480,7 @@ int main(int argc, char * argv[]){
     SDL_SetRenderTarget(renderer, texture);
 
 
-    //initialize 
+    //initialize game variables
     create_aliens();
     init_alien_bullets();
     Controller plyrctrl = {false, false, false};
@@ -424,8 +506,11 @@ int main(int argc, char * argv[]){
                     plyrctrl.right = true;
                     break;
                 case SDLK_UP:
-                    plyrctrl.up = true;
+                    plyrctrl.shoot = true;
                     break;    
+                case SDLK_SPACE:
+                    plyrctrl.shoot = true;
+                    break;   
                 default:
                     // ignore
                 }
@@ -441,7 +526,10 @@ int main(int argc, char * argv[]){
                     plyrctrl.right = false;
                     break;
                 case SDLK_UP:
-                    plyrctrl.up = false;
+                    plyrctrl.shoot = false;
+                    break;    
+                case SDLK_SPACE:
+                    plyrctrl.shoot = false;
                     break;    
                 default:
                     // ignore
@@ -469,7 +557,7 @@ int main(int argc, char * argv[]){
         
         
 
-        if (plyrctrl.up){
+        if (plyrctrl.shoot){
             player_shoot();
         }
         if (plyrctrl.left){

@@ -12,11 +12,18 @@ typedef struct
     float y;
 }Player;
   
-
+/*
+Species list
+depressed alien
+happy alien
+squid alien
+mothership
+*/
 typedef struct{
     float x;
     float y;
     bool alive;
+    int species; 
 }Alien;
 
 
