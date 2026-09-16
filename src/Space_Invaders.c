@@ -57,6 +57,8 @@ AlienBullet * alien_bullets;
 int alien_bullet_count = 0;
 int alien_start = 0;
 int alien_end = ALIEN_COL-1;
+int alien_frame = 0;
+Uint32 alien_frame_timer = 0;
 
 
 typedef struct Controller{
@@ -224,7 +226,7 @@ void create_aliens(){
 
 
     
-void render_triangle_alien(SDL_Renderer *renderer, float ox, float oy)
+void render_triangle_alien(SDL_Renderer *renderer, float ox, float oy, int frame)
 {
     SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
     ox = (int)ox;
@@ -248,7 +250,7 @@ void render_triangle_alien(SDL_Renderer *renderer, float ox, float oy)
     for (int i = 0; i < 4; i++)
         SDL_RenderFillRect(renderer, &body[i]);
 
-    SDL_Rect legs_frame1[] = {
+    SDL_Rect legs_frame0[] = {
         { mx - 12 + 6,  oy + 17, 3, 3 },
         { mx - 12 + 15, oy + 17, 3, 3 },
 
@@ -264,7 +266,7 @@ void render_triangle_alien(SDL_Renderer *renderer, float ox, float oy)
     };
 
 
-    SDL_Rect legs[] = {
+    SDL_Rect legs_frame1[] = {
         { mx - 12 + 3,  oy + 17, 3, 3 },
         { mx - 12 + 9,  oy + 17, 3, 3 },
         { mx - 12 + 12, oy + 17, 3, 3 },
@@ -279,8 +281,15 @@ void render_triangle_alien(SDL_Renderer *renderer, float ox, float oy)
 
     };
 
-    for (int i = 0; i < 8; i++)
-        SDL_RenderFillRect(renderer, &legs[i]);
+    if (frame == 0){
+        for (int i = 0; i < 10; i++)
+            SDL_RenderFillRect(renderer, &legs_frame0[i]);
+    }
+    else if (frame == 1){
+        for (int i = 0; i < 8; i++)
+            SDL_RenderFillRect(renderer, &legs_frame1[i]);
+    }
+
 
 
     // color of eyes
@@ -307,8 +316,8 @@ void render_aliens(SDL_Renderer * renderer){
                 SDL_Rect alien_box= {aliens[y][x].x, aliens[y][x].y, ALIEN_SIZE, ALIEN_SIZE };
                 //SDL_RenderFillRect(renderer, &alien_box);
                 //SDL_RenderDrawRect(renderer, &alien_box);
-                
-                render_triangle_alien(renderer,aliens[y][x].x,aliens[y][x].y);
+
+                render_triangle_alien(renderer,aliens[y][x].x,aliens[y][x].y, alien_frame);
                 }
         }
     }
@@ -555,7 +564,11 @@ int main(int argc, char * argv[]){
         // start frame
         Uint32 frameStart = SDL_GetTicks();
         
-        
+        // update alien frame
+        if (frameStart - alien_frame_timer >= 1000){
+            alien_frame = !alien_frame;
+            alien_frame_timer = frameStart;
+        }
 
         if (plyrctrl.shoot){
             player_shoot();
@@ -564,7 +577,7 @@ int main(int argc, char * argv[]){
             player.x-=move_left_speed;
         }
         if (plyrctrl.right){
-            player.x+=move_right_speed;
+            player.x+=move_right_speed; 
         }
         
         SDL_SetRenderTarget(renderer, texture);
