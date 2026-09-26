@@ -199,6 +199,7 @@ int main(int argc, char * argv[]){
     create_aliens();
     init_alien_bullets();
     Controller plyrctrl = {false, false, false};
+    bool plyrQUIT = false;
     int shoot_time = 0;
     int move_left_speed=PLAYER_MOVE_SPEED;
     int move_right_speed=PLAYER_MOVE_SPEED;
@@ -213,7 +214,7 @@ int main(int argc, char * argv[]){
                 break;
             }
             if(e.type == SDL_KEYDOWN){
-                switch (e.key.keysym.sym) {
+              switch (e.key.keysym.sym) {
                 case SDLK_LEFT:
                     plyrctrl.left = true;
                     break;
@@ -225,17 +226,19 @@ int main(int argc, char * argv[]){
                     break;    
                 case SDLK_SPACE:
                     plyrctrl.shoot = true;
-                    break;   
+                    break;  
+                case SDLK_ESCAPE:
+                    plyrQUIT = true;
+                    break;
+                    
                 default:
                     // ignore
-                }
-
+              }
             }
             if(e.type == SDL_KEYUP){
-                switch (e.key.keysym.sym) {
+              switch (e.key.keysym.sym) {
                 case SDLK_LEFT:
                     plyrctrl.left = false;
-                    
                     break;
                 case SDLK_RIGHT:
                     plyrctrl.right = false;
@@ -252,14 +255,17 @@ int main(int argc, char * argv[]){
 
             }
         }
-
+        
+        if (plyrQUIT){
+            break;
+        }
         // calc for player/screen boundry
-        if (player.x<=0){
+        if (player.x<=25){
             move_left_speed =0;
             
         }
         else{move_left_speed = PLAYER_MOVE_SPEED;}
-        if (player.x>WIDTH-25){
+        if (player.x>WIDTH-30){
             move_right_speed =0;
         }
         else{move_right_speed = PLAYER_MOVE_SPEED;}

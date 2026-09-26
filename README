@@ -1,0 +1,2 @@
+# Space Invaders from scratch
+This is a clone of the classic 1979 space invaders game. This clone uses only the most basic tools, basic SDL2 as a render and the rest is done from scratch using the c language.
