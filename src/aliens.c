@@ -4,6 +4,7 @@
 todo
 change does alien shoot to bool
 add all alien species
+add wasd controls
 */
 
 Alien ** aliens;
@@ -248,7 +249,7 @@ void render_triangle_alien(SDL_Renderer *renderer, float ox, float oy, int frame
             SDL_RenderFillRect(renderer, &legs_frame1[i]);
     }
 
-
+    
 
     // color of eyes
     SDL_SetRenderDrawColor(renderer,0,0,20,255);
@@ -261,7 +262,85 @@ void render_triangle_alien(SDL_Renderer *renderer, float ox, float oy, int frame
         SDL_RenderFillRect(renderer, &eyes[i]);
  
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-}
+};
+
+
+void render_squid_alien(SDL_Renderer *renderer, float ox, float oy, int frame){
+    SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
+    ox = (int)ox;
+    oy = (int)oy;
+
+    //middle of the alien
+    int mx = ox + ALIEN_SIZE / 2;
+
+    rectangle l1 = calculate_square_from_center(mx, oy, 12 , 10 );
+    rectangle l2 = calculate_square_from_center(mx, oy,  24, 10 );
+    rectangle l3 = calculate_square_from_center(mx, oy, 36, 10 );
+
+    SDL_Rect body[] = {
+        { l1.x, oy-1, l1.w, l1.h },
+        { l2.x, oy+2, l2.w, l2.h },
+        { l3.x, oy+6, l3.w, l3.h },
+        
+    };
+
+    for (int i = 0; i < 3; i++)
+        SDL_RenderFillRect(renderer, &body[i]);
+    // pixels are placed left to right
+    SDL_Rect legs_frame0[] = {
+        { mx - 12 + 3,  oy + 16, 6, 3 },
+        { mx - 12 + 15, oy + 16, 6, 3 },
+
+        { mx - 12 + 0,  oy + 19, 6, 3 },
+        { mx - 12 + 9,  oy + 19, 6, 3 },
+        { mx - 12 + 18, oy + 19, 6, 3 },
+
+        { mx - 12 - 6,  oy + 22, 6, 3 },
+        { mx - 12 + 24, oy + 22, 6, 3 },
+    };
+
+
+    SDL_Rect legs_frame1[] = {
+        { mx - 12 + 3,  oy + 16, 6, 3 },
+        { mx - 12 + 15, oy + 16, 6, 3 },
+
+        { mx - 12 + 0,  oy + 19, 6, 3 },
+        { mx - 12 + 9,  oy + 19, 6, 3 },
+        { mx - 12 + 18, oy + 19, 6, 3 },
+
+        { mx - 12 - 3,  oy + 22, 6, 3 },
+        { mx - 12 + 21, oy + 22, 6, 3 },
+    };
+
+
+    
+
+     if (frame == 0){
+         for (int i = 0; i < 8; i++)
+             SDL_RenderFillRect(renderer, &legs_frame0[i]);
+     }
+     else if (frame == 1){
+         for (int i = 0; i < 8; i++)
+             SDL_RenderFillRect(renderer, &legs_frame1[i]);
+     }
+
+    
+
+    // color of eyes
+    SDL_SetRenderDrawColor(renderer,0,0,20,255);
+    SDL_Rect eyes[] = {
+        { mx - 12 + 3,  oy + 9, 6, 4 },
+        { mx - 12 + 15,  oy + 9, 6, 4 },
+    };
+
+    for (int i = 0; i < 2; i++)
+        SDL_RenderFillRect(renderer, &eyes[i]);
+ 
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+
+
+};
+
 
 void render_aliens(SDL_Renderer * renderer){
     
@@ -275,7 +354,7 @@ void render_aliens(SDL_Renderer * renderer){
                 //SDL_RenderFillRect(renderer, &alien_box);
                 //SDL_RenderDrawRect(renderer, &alien_box);
 
-                render_triangle_alien(renderer,aliens[y][x].x,aliens[y][x].y, alien_frame);
+                render_squid_alien(renderer,aliens[y][x].x,aliens[y][x].y, alien_frame);
                 }
         }
     }
