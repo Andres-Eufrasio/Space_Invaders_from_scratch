@@ -18,15 +18,15 @@ rectangle calculate_square_from_center(float ox, float oy, int w, int h);
 // seen as 1 / ALIEN_SHOOT_CHANGE
 #define ALIEN_SHOOT_CHANGE 100
 #define MAX_ALIEN_BULLETS 6
-#define BULLET_SPEED 10
+#define BULLET_SPEED 30
 #define BULLET_HEIGHT 20
 #define BULLET_WIDTH 3
 
 void create_aliens();
 void update_alien_length();
 void init_alien_bullets();
-void update_alien_position();
-int does_alien_shoot();
+bool update_alien_position(bool new_line);
+bool does_alien_shoot();
 void alien_shoot();
 void update_alien_bullet(SDL_Renderer *renderer);
 void render_aliens(SDL_Renderer *renderer);

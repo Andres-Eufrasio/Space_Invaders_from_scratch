@@ -39,7 +39,7 @@ void create_aliens(){
 
 Alien generate_alien_shooter(){
     
-    int alien_x = (rand() % alien_end) + alien_start;
+    int alien_x = (rand() % (alien_end - alien_start + 1)) + alien_start;
     int buff = alien_x;
     while (alien_x <= alien_end){
         
@@ -64,7 +64,7 @@ Alien generate_alien_shooter(){
 
 
 
-int does_alien_shoot(){
+bool does_alien_shoot(){
     int random = rand() % ALIEN_SHOOT_CHANGE;
     if (1 == random){
         return 1;
@@ -119,7 +119,6 @@ void update_alien_bullet(SDL_Renderer * renderer){
 }
 
 void update_alien_bullet_animation(){
-    
 }
 
 
@@ -154,14 +153,13 @@ void update_alien_length(){
     
 };
 
-int alien_direction = -1;
-float alien_speed = 92; 
+int alien_direction = 1;
+float alien_speed = 21; 
 int new_line_flag = 0;
 
-void update_alien_position(){
+bool update_alien_position(bool new_line){
     if (aliens[0][alien_start].x <= 20 ||aliens[0][alien_end].x >= WIDTH - 40){
         alien_direction *= -1;
-        alien_speed += 3;
         new_line_flag = 1;
         
     }
@@ -170,17 +168,20 @@ void update_alien_position(){
         for (int x=alien_start; x<=alien_end; x++){
             aliens[y][x].x += alien_direction*alien_speed;
         }
+
     if(new_line_flag){
         for (int y=0; y<ALIEN_ROW; y++){ 
             for (int x=alien_start; x<=alien_end; x++){
-                aliens[y][x].y += 20;
+                aliens[y][x].y += 6;
             }
-            
         }
     }
-        new_line_flag = 0;
     }
-    
+    if (new_line_flag){
+        new_line_flag = 0;
+        return true;
+    }
+    return false;
 
 }
 

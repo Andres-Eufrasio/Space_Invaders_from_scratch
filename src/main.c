@@ -11,7 +11,7 @@
 
 #define CENTERE_X WIDTH/2
 #define CENTERE_Y HEIGHT/2
-#define PLAYER_MOVE_SPEED 5
+#define PLAYER_MOVE_SPEED 200
 
 
 
@@ -26,8 +26,6 @@ ADD TOP SPACESHIP FOR EXTRA POINTS
 ADD SHIELDS
 SWITCH TO DELTA TIME
 */
-
-
 
 
 
@@ -46,13 +44,13 @@ rectangle calculate_square_from_center(float ox, float oy, int w, int h){
 }
 
 
-
 void render_background(SDL_Renderer * renderer){
     SDL_Rect background = {0, 0, WIDTH, HEIGHT};
     SDL_RenderDrawRect(renderer, &background);
     SDL_SetRenderDrawColor(renderer,0,0,20,255);
     SDL_RenderFillRect(renderer, &background);
 }
+
 
 void draw_player(SDL_Renderer * renderer){
     SDL_SetRenderDrawColor(renderer,0,255,0,255);
@@ -86,7 +84,6 @@ void draw_player(SDL_Renderer * renderer){
 }
 
 
-
 int player_shoot(){
     if (player_bullet.alive){
         return 0;
@@ -97,6 +94,7 @@ int player_shoot(){
     player_bullet.y = player.y -2; 
     return 1;
 };
+
 
 int update_player_bullet(SDL_Renderer * renderer){
     if (!player_bullet.alive){
@@ -116,12 +114,9 @@ int update_player_bullet(SDL_Renderer * renderer){
 };
 
 
-
-
 //gives slightly extra reach on hit box
 #define ALIEN_COLLISION_LEFT -2
 #define ALIEN_COLLISION_TOP -5
-
 
 
 void collision(){
@@ -144,9 +139,7 @@ void collision(){
                     player_bullet.x = player.x - 3;
                     player_bullet.y = player.y;
                     update_alien_length();
-            }
-        
-
+                }
             }
         }
     }       
@@ -162,17 +155,10 @@ void collision(){
                 alien_bullets[i].alive = false;
                 
             }
-
         }
     }
-    
-    // overlap alien bullet + player
-    
 }
 
-
-    
-    
 
 int main(int argc, char * argv[]){
     srand(time(0));
@@ -206,6 +192,9 @@ int main(int argc, char * argv[]){
     player_bullet.alive=false;
     player_bullet.x=10;
     player_bullet.y=10;
+    float lastFrameTime = 0;
+    bool new_line = false;
+    int alien_speed =750;
     
     while(1){
         SDL_Event e;
@@ -262,7 +251,6 @@ int main(int argc, char * argv[]){
         // calc for player/screen boundry
         if (player.x<=25){
             move_left_speed =0;
-            
         }
         else{move_left_speed = PLAYER_MOVE_SPEED;}
         if (player.x>WIDTH-30){
@@ -271,31 +259,39 @@ int main(int argc, char * argv[]){
         else{move_right_speed = PLAYER_MOVE_SPEED;}
         
 
-        
-
         // start frame
-        Uint32 frameStart = SDL_GetTicks();
+        Uint32 currentTime = SDL_GetTicks();
+        float dt = (currentTime - lastFrameTime) / 1000.0f;
+        lastFrameTime = currentTime;
         
         // update alien frame
-        if (frameStart - alien_frame_timer >= 1000){
+        if (currentTime - alien_frame_timer >= alien_speed){
             alien_frame = !alien_frame;
-            alien_frame_timer = frameStart;
-			update_alien_position();
-			collision();
+            alien_frame_timer = currentTime;
+            
+            if (!new_line){
+                new_line = update_alien_position(new_line);
+            }
+            else{ 
+                new_line = update_alien_position(new_line);
+                alien_speed - 50;
+                new_line = false;
+                }
 			if(alien_end < alien_start){
 				break;
 			}
         }
+        collision();
 
         // update based on button presses
         if (plyrctrl.shoot){
             player_shoot();
         }
         if (plyrctrl.left){
-            player.x-=move_left_speed;
+            player.x-=move_left_speed*dt;
         }
         if (plyrctrl.right){
-            player.x+=move_right_speed; 
+            player.x+=move_right_speed*dt; 
         }
         
         SDL_SetRenderTarget(renderer, texture);
@@ -304,9 +300,7 @@ int main(int argc, char * argv[]){
 
         
         render_background(renderer);
-        
 
-        
         
         if(does_alien_shoot()){
             alien_shoot();
@@ -316,15 +310,13 @@ int main(int argc, char * argv[]){
         render_aliens(renderer);
         
         draw_player(renderer);
-        
-
 
         SDL_SetRenderTarget(renderer, NULL);
         
         SDL_RenderCopy(renderer, texture, NULL , NULL);
         SDL_RenderPresent(renderer);
 
-        Uint32 frameTime = SDL_GetTicks() - frameStart;
+        Uint32 frameTime = SDL_GetTicks() - currentTime;
         if (frameTime < FRAME_TIME){
             SDL_Delay(FRAME_TIME - frameTime);
         }
