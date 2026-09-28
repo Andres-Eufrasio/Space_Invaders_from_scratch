@@ -155,13 +155,13 @@ void update_alien_length(){
 };
 
 int alien_direction = -1;
-float alien_speed = 0.2;
+float alien_speed = 92; 
 int new_line_flag = 0;
 
 void update_alien_position(){
-    if (aliens[0][alien_start].x <= 0 ||aliens[0][alien_end].x >= WIDTH - 20){
+    if (aliens[0][alien_start].x <= 20 ||aliens[0][alien_end].x >= WIDTH - 40){
         alien_direction *= -1;
-        alien_speed += 0.2;
+        alien_speed += 3;
         new_line_flag = 1;
         
     }
@@ -185,7 +185,7 @@ void update_alien_position(){
 }
 
 
-void render_triangle_alien(SDL_Renderer *renderer, float ox, float oy, int frame)
+void render_alien_top(SDL_Renderer *renderer, float ox, float oy, int frame)
 {
     SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
     ox = (int)ox;
@@ -265,7 +265,7 @@ void render_triangle_alien(SDL_Renderer *renderer, float ox, float oy, int frame
 };
 
 
-void render_squid_alien(SDL_Renderer *renderer, float ox, float oy, int frame){
+void render_alien_bottom(SDL_Renderer *renderer, float ox, float oy, int frame){
     SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
     ox = (int)ox;
     oy = (int)oy;
@@ -273,13 +273,13 @@ void render_squid_alien(SDL_Renderer *renderer, float ox, float oy, int frame){
     //middle of the alien
     int mx = ox + ALIEN_SIZE / 2;
 
-    rectangle l1 = calculate_square_from_center(mx, oy, 12 , 10 );
-    rectangle l2 = calculate_square_from_center(mx, oy,  24, 10 );
-    rectangle l3 = calculate_square_from_center(mx, oy, 36, 10 );
+    rectangle l1 = calculate_square_from_center(mx, oy, 12 , 3 );
+    rectangle l2 = calculate_square_from_center(mx, oy,  30, 3 );
+    rectangle l3 = calculate_square_from_center(mx, oy, 36, 9 );
 
     SDL_Rect body[] = {
-        { l1.x, oy-1, l1.w, l1.h },
-        { l2.x, oy+2, l2.w, l2.h },
+        { l1.x, oy-0, l1.w, l1.h },
+        { l2.x, oy+3, l2.w, l2.h },
         { l3.x, oy+6, l3.w, l3.h },
         
     };
@@ -287,30 +287,30 @@ void render_squid_alien(SDL_Renderer *renderer, float ox, float oy, int frame){
     for (int i = 0; i < 3; i++)
         SDL_RenderFillRect(renderer, &body[i]);
     // pixels are placed left to right
-    SDL_Rect legs_frame0[] = {
-        { mx - 12 + 3,  oy + 16, 6, 3 },
-        { mx - 12 + 15, oy + 16, 6, 3 },
+	SDL_Rect legs_frame0[] = {
+		{ mx - 12 + 3,  oy + 15, 6, 3 },
+		{ mx - 12 + 15, oy + 15, 6, 3 },
 
-        { mx - 12 + 0,  oy + 19, 6, 3 },
-        { mx - 12 + 9,  oy + 19, 6, 3 },
-        { mx - 12 + 18, oy + 19, 6, 3 },
+		{ mx - 12 + 0,  oy + 18, 6, 3 },
+		{ mx - 12 + 9,  oy + 18, 6, 3 },
+		{ mx - 12 + 18, oy + 18, 6, 3 },
 
-        { mx - 12 - 6,  oy + 22, 6, 3 },
-        { mx - 12 + 24, oy + 22, 6, 3 },
-    };
+		{ mx - 12 - 6,  oy + 21, 6, 3 },
+		{ mx - 12 + 24, oy + 21, 6, 3 },
+	};
 
 
-    SDL_Rect legs_frame1[] = {
-        { mx - 12 + 3,  oy + 16, 6, 3 },
-        { mx - 12 + 15, oy + 16, 6, 3 },
+	SDL_Rect legs_frame1[] = {
+		{ mx - 12 + 3,  oy + 15, 6, 3 },
+		{ mx - 12 + 15, oy + 15, 6, 3 },
 
-        { mx - 12 + 0,  oy + 19, 6, 3 },
-        { mx - 12 + 9,  oy + 19, 6, 3 },
-        { mx - 12 + 18, oy + 19, 6, 3 },
+		{ mx - 12 + 0,  oy + 18, 6, 3 },
+		{ mx - 12 + 9,  oy + 18, 6, 3 },
+		{ mx - 12 + 18, oy + 18, 6, 3 },
 
-        { mx - 12 - 3,  oy + 22, 6, 3 },
-        { mx - 12 + 21, oy + 22, 6, 3 },
-    };
+		{ mx - 12 - 3,  oy + 21, 6, 3 },
+		{ mx - 12 + 21, oy + 21, 6, 3 },
+	};
 
 
     
@@ -329,16 +329,104 @@ void render_squid_alien(SDL_Renderer *renderer, float ox, float oy, int frame){
     // color of eyes
     SDL_SetRenderDrawColor(renderer,0,0,20,255);
     SDL_Rect eyes[] = {
-        { mx - 12 + 3,  oy + 9, 6, 4 },
-        { mx - 12 + 15,  oy + 9, 6, 4 },
+        { mx - 12 + 3,  oy + 9, 6, 3 },
+        { mx - 12 + 15,  oy + 9, 6, 3 },
     };
 
     for (int i = 0; i < 2; i++)
         SDL_RenderFillRect(renderer, &eyes[i]);
  
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+};
+
+void render_alien_middle(SDL_Renderer *renderer, float ox, float oy, int frame){
+    SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
+    ox = (int)ox;
+    oy = (int)oy;
+
+    //middle of the alien
+    int mx = ox + ALIEN_SIZE / 2;
+
+    rectangle l1 = calculate_square_from_center(mx, oy, 21 , 10 );
+    rectangle l2 = calculate_square_from_center(mx, oy,  28, 9 );
+
+    SDL_Rect body[] = {
+        { l1.x, oy+6, l1.w, l1.h },
+        { l2.x - 1 , oy+9, l2.w, l2.h },
+        
+    };
 
 
+    SDL_Rect antena[] = {
+        { mx - 12 + 0,  oy + 0, 3, 3 },
+        { mx - 12 + 18, oy + 0, 3, 3 },
+
+        { mx - 12 + 3,  oy + 3, 3, 3 },
+        { mx - 12 + 15, oy + 3, 3, 3 },
+    };
+
+    SDL_Rect arms_frame0[] = {
+        { mx - 12 - 6,  oy + 3, 3, 9 },
+        { mx - 12 + 24, oy + 3, 3, 9 },
+    };
+    SDL_Rect arms_frame1[] = {
+        { mx - 12 - 6,  oy + 12, 3, 9 },
+        { mx - 12 + 24, oy + 12, 3, 9 },
+    };
+    for (int i = 0; i < 2; i++)
+        SDL_RenderFillRect(renderer, &body[i]);
+ 
+    for (int i = 0; i < 4; i++)
+        SDL_RenderFillRect(renderer, &antena[i]);     
+  
+ 
+    // pixels are placed left to right
+	// 
+    SDL_Rect legs_frame0[] = {
+        { mx - 12 + 0,  oy + 18, 3, 3 },
+        { mx - 12 + 18, oy + 18, 3, 3 },
+
+        { mx - 12 - 3,  oy + 21, 3, 3 },
+        { mx - 12 + 21,  oy + 21, 3, 3 },
+
+    };
+
+
+    SDL_Rect legs_frame1[] = {
+        { mx - 12 + 0,  oy + 18, 3, 3 },
+        { mx - 12 + 18, oy + 18, 3, 3 },
+
+        { mx - 12 + 3,  oy + 21, 6, 3 },
+        { mx - 12 + 12,  oy + 21, 6, 3 },
+
+    };
+
+     if (frame == 0){
+         for (int i = 0; i < 4; i++)
+             SDL_RenderFillRect(renderer, &legs_frame0[i]);
+         for (int i = 0; i < 2; i++)
+        	SDL_RenderFillRect(renderer, &arms_frame0[i]);
+     }
+     else if (frame == 1){
+         for (int i = 0; i < 4; i++)
+             SDL_RenderFillRect(renderer, &legs_frame1[i]);
+         for (int i = 0; i < 2; i++)
+        	SDL_RenderFillRect(renderer, &arms_frame1[i]);
+	}
+
+    
+
+    
+    SDL_SetRenderDrawColor(renderer,0,0,20,255);
+    SDL_Rect eyes[] = {
+        { mx - 12 + 3,  oy + 9, 3, 3 },
+        { mx - 12 + 15,  oy + 9, 3, 3 },
+    };
+
+    for (int i = 0; i < 2; i++)
+        SDL_RenderFillRect(renderer, &eyes[i]);
+ 
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 };
 
 
@@ -349,13 +437,22 @@ void render_aliens(SDL_Renderer * renderer){
     for (int y=0; y<ALIEN_ROW; y++){
         for (int x=0; x<=alien_end; x++){
             if (aliens[y][x].alive){
-                
-                SDL_Rect alien_box= {aliens[y][x].x, aliens[y][x].y, ALIEN_SIZE, ALIEN_SIZE };
+				if (y == 0) {
+					render_alien_top(renderer, aliens[y][x].x, aliens[y][x].y, alien_frame);
+				}
+				else if (y == 1 || y == 2) {
+					render_alien_middle(renderer, aliens[y][x].x, aliens[y][x].y, alien_frame);
+				}
+				else {
+					render_alien_bottom(renderer, aliens[y][x].x, aliens[y][x].y, alien_frame);
+				}
+        
+                //SDL_Rect alien_box= {aliens[y][x].x, aliens[y][x].y, ALIEN_SIZE, ALIEN_SIZE };
                 //SDL_RenderFillRect(renderer, &alien_box);
                 //SDL_RenderDrawRect(renderer, &alien_box);
 
-                render_squid_alien(renderer,aliens[y][x].x,aliens[y][x].y, alien_frame);
-                }
+                
+            }
         }
     }
 };

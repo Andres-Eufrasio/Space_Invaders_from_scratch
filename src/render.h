@@ -3,7 +3,7 @@
 
 #define GAME_NAME "Space invaders"
 //screen size
-#define WIDTH 700
+#define WIDTH 800
 #define HEIGHT 650
 #define PIXEL_FORMAT SDL_PIXELFORMAT_RGBA8888
 

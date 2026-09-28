@@ -280,6 +280,11 @@ int main(int argc, char * argv[]){
         if (frameStart - alien_frame_timer >= 1000){
             alien_frame = !alien_frame;
             alien_frame_timer = frameStart;
+			update_alien_position();
+			collision();
+			if(alien_end < alien_start){
+				break;
+			}
         }
 
         // update based on button presses
@@ -300,11 +305,7 @@ int main(int argc, char * argv[]){
         
         render_background(renderer);
         
-        update_alien_position();
-        collision();
-        if(alien_end < alien_start){
-            break;
-        }
+
         
         
         if(does_alien_shoot()){

@@ -12,7 +12,7 @@ rectangle calculate_square_from_center(float ox, float oy, int w, int h);
 #define ALIEN_COL 11
 #define ALIEN_X 120
 #define ALIEN_Y 70
-#define ALIEN_SPACE_X 40
+#define ALIEN_SPACE_X 45
 #define ALIEN_SPACE_Y 40
 #define ALIEN_SIZE 30
 // seen as 1 / ALIEN_SHOOT_CHANGE
