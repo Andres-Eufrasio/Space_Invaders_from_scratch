@@ -462,25 +462,4 @@ void render_aliens(SDL_Renderer * renderer){
     }
 };
 
-typedef struct{
-    float x;
-    float y;
-    bool alive;
-}Shield;
 
-Shield shields[3][22][16];
-
-void init_shields(void)
-{
-    for (int shield = 0; shield < 3; shield++) {
-        for (int x = 0; x < 22; x++) {
-            for (int y = 0; y < 16; y++) {
-                shields[shield][x][y].alive = true;
-                shields[shield][x][y].x = 1;
-                shields[shield][x][y].y = 1;
-
-            }
-        }
-    }
-
-}
