@@ -38,28 +38,34 @@ void create_aliens(){
 };
 
 Alien generate_alien_shooter(){
-    
     int alien_x = (rand() % (alien_end - alien_start + 1)) + alien_start;
-    int buff = alien_x;
-    while (alien_x <= alien_end){
+    int alien_y = rand() % ALIEN_ROW;
+
+    int start_x = alien_x;
+    int start_y = alien_y;
+
+    do {
+        if (aliens[alien_y][alien_x].alive) {
+            return aliens[alien_y][alien_x];
+        }
+
         
-        for (int y=ALIEN_ROW-1; y>=0; y--){
-            if (aliens[y][alien_x].alive){
-                return aliens[y][alien_x]; 
+        alien_x++;
+
+        
+        if (alien_x > alien_end) {
+            alien_x = alien_start;
+
+           
+            alien_y++;
+
+            
+            if (alien_y >= ALIEN_ROW) {
+                alien_y = 0;
             }
         }
-        alien_x ++;
-    }
-    alien_x = buff;
-    while (alien_x >= alien_start){
-        alien_x --;
-        for (int y=ALIEN_ROW-1; y>=0; y--){
-            if (aliens[y][alien_x].alive){
-                return aliens[y][alien_x]; 
-            }
-        }
-    
-    }
+
+    } while (alien_x != start_x || alien_y != start_y);
 }
 
 
@@ -128,13 +134,11 @@ void update_alien_length(){
     for (int y = 0; y < ALIEN_ROW; y++) {
         if (aliens[y][alien_start].alive) {
             left_alive = true;
-            break;
         }
     }
     for (int y = 0; y < ALIEN_ROW; y++) {
         if (aliens[y][alien_end].alive) {
             right_alive = true;
-            break;
         }
     }
 
@@ -305,12 +309,12 @@ void render_alien_bottom(SDL_Renderer *renderer, float ox, float oy, int frame){
 		{ mx - 12 + 3,  oy + 15, 6, 3 },
 		{ mx - 12 + 15, oy + 15, 6, 3 },
 
-		{ mx - 12 + 0,  oy + 18, 6, 3 },
+		{ mx - 12 - 3,  oy + 18, 9, 3 },
 		{ mx - 12 + 9,  oy + 18, 6, 3 },
-		{ mx - 12 + 18, oy + 18, 6, 3 },
+		{ mx - 12 + 18, oy + 18, 9, 3 },
 
-		{ mx - 12 - 3,  oy + 21, 6, 3 },
-		{ mx - 12 + 21, oy + 21, 6, 3 },
+		{ mx - 12 + 3,  oy + 21, 6, 3 },
+		{ mx - 12 + 15, oy + 21, 6, 3 },
 	};
 
 
@@ -457,3 +461,26 @@ void render_aliens(SDL_Renderer * renderer){
         }
     }
 };
+
+typedef struct{
+    float x;
+    float y;
+    bool alive;
+}Shield;
+
+Shield shields[3][22][16];
+
+void init_shields(void)
+{
+    for (int shield = 0; shield < 3; shield++) {
+        for (int x = 0; x < 22; x++) {
+            for (int y = 0; y < 16; y++) {
+                shields[shield][x][y].alive = true;
+                shields[shield][x][y].x = 1;
+                shields[shield][x][y].y = 1;
+
+            }
+        }
+    }
+
+}

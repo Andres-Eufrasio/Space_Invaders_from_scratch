@@ -281,7 +281,7 @@ int main(int argc, char * argv[]){
 				break;
 			}
         }
-        collision();
+        
 
         // update based on button presses
         if (plyrctrl.shoot){
@@ -293,7 +293,7 @@ int main(int argc, char * argv[]){
         if (plyrctrl.right){
             player.x+=move_right_speed*dt; 
         }
-        
+        collision();
         SDL_SetRenderTarget(renderer, texture);
         //SDL_RenderClear(renderer);
         

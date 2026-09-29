@@ -17,8 +17,8 @@ rectangle calculate_square_from_center(float ox, float oy, int w, int h);
 #define ALIEN_SIZE 30
 // seen as 1 / ALIEN_SHOOT_CHANGE
 #define ALIEN_SHOOT_CHANGE 100
-#define MAX_ALIEN_BULLETS 6
-#define BULLET_SPEED 30
+#define MAX_ALIEN_BULLETS 4
+#define BULLET_SPEED 10
 #define BULLET_HEIGHT 20
 #define BULLET_WIDTH 3
 
