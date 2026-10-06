@@ -4,6 +4,8 @@
 #include <time.h>
 #include "main.h"
 #include "render.h"
+#include "shield.h"
+
 
 
 #define FPS 60
@@ -36,8 +38,10 @@ PlayerBullet player_bullet;
 
 rectangle calculate_square_from_center(float ox, float oy, int w, int h){
     rectangle rect;
-    rect.x = (int)ox-w / 2.0f;
-    rect.y = (int)oy-h / 2.0f;
+    
+    int HALF = 2.0f;
+    rect.x = (int)ox-w / HALF;
+    rect.y = (int)oy-h / HALF;
     rect.w = w;
     rect.h = h;
     return rect;
@@ -184,6 +188,7 @@ int main(int argc, char * argv[]){
     //initialize game variables
     create_aliens();
     init_alien_bullets();
+    init_shields();
     Controller plyrctrl = {false, false, false};
     bool plyrQUIT = false;
     int shoot_time = 0;
@@ -194,7 +199,7 @@ int main(int argc, char * argv[]){
     player_bullet.y=10;
     float lastFrameTime = 0;
     bool new_line = false;
-    int alien_speed =750;
+    int ALIEN_SPEED =750;
     
     while(1){
         SDL_Event e;
@@ -221,7 +226,6 @@ int main(int argc, char * argv[]){
                     break;
                     
                 default:
-                    // ignore
               }
             }
             if(e.type == SDL_KEYUP){
@@ -239,7 +243,6 @@ int main(int argc, char * argv[]){
                     plyrctrl.shoot = false;
                     break;    
                 default:
-                    // ignore
                 }
 
             }
@@ -265,7 +268,7 @@ int main(int argc, char * argv[]){
         lastFrameTime = currentTime;
         
         // update alien frame
-        if (currentTime - alien_frame_timer >= alien_speed){
+        if (currentTime - alien_frame_timer >= ALIEN_SPEED){
             alien_frame = !alien_frame;
             alien_frame_timer = currentTime;
             
@@ -274,7 +277,6 @@ int main(int argc, char * argv[]){
             }
             else{ 
                 new_line = update_alien_position(new_line);
-                alien_speed - 50;
                 new_line = false;
                 }
 			if(alien_end < alien_start){
@@ -308,6 +310,7 @@ int main(int argc, char * argv[]){
         update_alien_bullet(renderer);
         update_player_bullet(renderer);
         render_aliens(renderer);
+        render_shields(renderer);
         
         draw_player(renderer);
 

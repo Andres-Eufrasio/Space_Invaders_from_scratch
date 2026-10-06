@@ -2,7 +2,7 @@
 #define SHIELD_H
 
 #include <stdbool.h>
-#include "main.c"
+#include <SDL2/SDL.h>
 #include "render.h"
 
 typedef struct{
@@ -12,6 +12,6 @@ typedef struct{
 }Shield;
 
 void init_shields();
-void render(SDL_Renderer * renderer);
+void render_shields(SDL_Renderer * renderer);
     
 #endif
