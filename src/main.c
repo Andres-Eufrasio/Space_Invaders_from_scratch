@@ -8,12 +8,12 @@
 
 
 
-#define FPS 60
+#define FPS = 60
 #define FRAME_TIME 1000 / FPS
 
-#define CENTERE_X WIDTH/2
-#define CENTERE_Y HEIGHT/2
-#define PLAYER_MOVE_SPEED 200
+const int CENTERE_X = WIDTH/2;
+const int CENTERE_Y = HEIGHT/2;
+const int PLAYER_MOVE_SPEED = 200;
 
 
 
@@ -125,7 +125,7 @@ int update_player_bullet(SDL_Renderer * renderer){
 
 void collision(){
 
-    // overlap player bullet + aliens
+    // overlap player_bullet + aliens
     for (int y = 0; y < ALIEN_ROW; y++){ 
         for (int x = alien_start; x <= alien_end; x++){
             if (!player_bullet.alive || !aliens[y][x].alive) {
@@ -147,20 +147,51 @@ void collision(){
             }
         }
     }       
-    // overlap player bullet + alien bullet
+    // overlap player_bullet + alien_bullet
     for(int i =0; i<MAX_ALIEN_BULLETS; i++){
+        int dy = alien_bullets[i].y - player.y;
+        int dx = player.x - alien_bullets[i].x;
+        if (dx > -10 && dx < 10 && dy > 20 ){
+            alien_bullets[i].alive = false;
+            alien_bullet_count --;
+            printf("death");
+            break;
+        }      
+
+
         if (!player_bullet.alive){break;}
         if (alien_bullets[i].alive){
             int dy = alien_bullets[i].y - player_bullet.y;
             int dx = player_bullet.x - alien_bullets[i].x;
             //test
-            if (dx > -9 && dx < 10 && dy > 20 ){
+            if (dx > -10 && dx < 10 && dy > 20 ){
                 player_bullet.alive = false;
                 alien_bullets[i].alive = false;
-                
+                alien_bullet_count --;
+            }
+        }      
+    }
+    for(int i =0; i<MAX_ALIEN_BULLETS; i++){
+        // overlap alien_bullet and shield
+        for (int shield = 0; shield < NUMBER_OF_SHIELDS; shield++) {
+            for (int y = 0; y < SHIELD_HEIGHT; y++) {
+                for (int x = 0; x < SHIELD_WIDTH; x++) {
+                    if (shields[shield][x][y].alive){
+                        int dy = alien_bullets[i].y - shields[shield][x][y].y;
+                        int dx = shields[shield][x][y].x - alien_bullets[i].x;
+
+                        if (dx > -9 && dx < 10 && dy > 2 ){
+                            shields[shield][x][y].alive = false;
+                            alien_bullets[i].alive = false;
+                            alien_bullet_count --;
+                        }
+                    }
+                }
             }
         }
     }
+
+
 }
 
 

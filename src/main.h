@@ -17,6 +17,7 @@ typedef struct
 {
     float x;
     float y;
+    int lives;
 }Player;
   
 /*

@@ -37,7 +37,9 @@ void create_aliens(){
     
 };
 
-Alien generate_alien_shooter(){
+
+Alien generate_alien_shooter(void)
+{
     int alien_x = (rand() % (alien_end - alien_start + 1)) + alien_start;
     int alien_y = rand() % ALIEN_ROW;
 
@@ -49,70 +51,105 @@ Alien generate_alien_shooter(){
             return aliens[alien_y][alien_x];
         }
 
-        
         alien_x++;
 
-        
         if (alien_x > alien_end) {
             alien_x = alien_start;
 
-           
             alien_y++;
 
-            
             if (alien_y >= ALIEN_ROW) {
                 alien_y = 0;
             }
         }
 
     } while (alien_x != start_x || alien_y != start_y);
+
+    // No alive alien was found
+    return (Alien){
+        .x = 0,
+        .y = 0,
+        .alive = false
+    };
 }
 
 
-
-bool does_alien_shoot(){
+bool does_alien_shoot(void)
+{
     int random = rand() % ALIEN_SHOOT_CHANGE;
-    if (1 == random){
-        return 1;
+
+    if (random == 1) {
+        return true;
     }
-    return 0;
+
+    return false;
 }
 
-void init_alien_bullets(){
-    
-    alien_bullets = (AlienBullet *)malloc(sizeof(AlienBullet) * MAX_ALIEN_BULLETS);
-    if (!alien_bullets){
-        printf("ERROR FAILED ALIEN BULLET INITALIZATION");
+
+void init_alien_bullets(void)
+{
+    alien_bullets = malloc(
+        sizeof *alien_bullets * MAX_ALIEN_BULLETS
+    );
+
+    if (!alien_bullets) {
+        printf("ERROR: FAILED ALIEN BULLET INITIALIZATION\n");
         abort();
     }
-    for (int i=0; i<MAX_ALIEN_BULLETS; i++){
-        alien_bullets[i] = (AlienBullet){.x = 0,.y= 0,.alive=false};
-    }
 
+    for (int i = 0; i < MAX_ALIEN_BULLETS; i++) {
+        alien_bullets[i] = (AlienBullet){
+            .x = 0,
+            .y = 0,
+            .alive = false
+        };
+    }
 }
 
-void alien_shoot(){
-    if (alien_bullet_count < MAX_ALIEN_BULLETS){
-        for(int i=0; i<MAX_ALIEN_BULLETS; i++){
-            if(alien_bullets[i].alive == false){
-                alien_bullets[i].alive = true;
-                Alien buff = generate_alien_shooter();
-                alien_bullets[i].x=buff.x+ALIEN_SIZE/2;
-                alien_bullets[i].y=buff.y+ALIEN_SIZE;
-                alien_bullets[i].alive=true;
-                alien_bullet_count++;
-                break;
-            }
+
+void alien_shoot(void)
+{
+    // Don't create more bullets than the maximum
+    if (alien_bullet_count >= MAX_ALIEN_BULLETS) {
+        return;
+    }
+
+    // Find an alien to shoot
+    Alien buff = generate_alien_shooter();
+
+    // No alive alien was found
+    if (!buff.alive) {
+        return;
+    }
+
+    // Find an unused bullet slot
+    for (int i = 0; i < MAX_ALIEN_BULLETS; i++) {
+
+        if (!alien_bullets[i].alive) {
+
+            alien_bullets[i].x =
+                buff.x + ALIEN_SIZE / 2.0;
+
+            alien_bullets[i].y =
+                buff.y + ALIEN_SIZE;
+
+            alien_bullets[i].alive = true;
+
+            alien_bullet_count++;
+
+            return;
         }
     }
 }
+
+
 
 void update_alien_bullet(SDL_Renderer * renderer){
     for (int i = 0; i<MAX_ALIEN_BULLETS;i++){
         if (!alien_bullets[i].alive){
             continue;
         }
-        alien_bullets[i].y += BULLET_SPEED/2;
+        alien_bullets[i].y += BULLET_SPEED/2.0;
         if (alien_bullets[i].y > HEIGHT - 10){
             alien_bullets[i].alive = false;
             alien_bullet_count--;
@@ -160,7 +197,7 @@ void update_alien_length(){
 int alien_direction = 1;
 float alien_speed = 21; 
 int new_line_flag = 0;
-
+int new_line_distance = 6;
 bool update_alien_position(bool new_line){
     if (aliens[0][alien_start].x <= 20 ||aliens[0][alien_end].x >= WIDTH - 40){
         alien_direction *= -1;
@@ -176,7 +213,7 @@ bool update_alien_position(bool new_line){
     if(new_line_flag){
         for (int y=0; y<ALIEN_ROW; y++){ 
             for (int x=alien_start; x<=alien_end; x++){
-                aliens[y][x].y += 6;
+                aliens[y][x].y += new_line_distance;
             }
         }
     }

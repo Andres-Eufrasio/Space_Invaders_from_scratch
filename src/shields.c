@@ -1,75 +1,77 @@
 #include "shield.h"
 
-#define SHIELD_HEIGHT 16
-#define SHIELD_WIDTH  22
-#define NUMBER_OF_SHIELDS  4
-#define SPACE_BETWEEN_SHIELDS 100
-#define PIXEL_SIZE 3
-#define SHIELD_X_START 115
-#define SHIELD_Y_START 470
+
+
 Shield shields[NUMBER_OF_SHIELDS][SHIELD_WIDTH][SHIELD_HEIGHT];
 
-void kill_shield_top_init(){
-
-    
+void kill_shield_top_init()
+{
+    int shield_units_to_delete = 3;
+    const int rows_deleted = 3;
     for (int shield = 0; shield < NUMBER_OF_SHIELDS; shield++) {
-        int shield_units_to_delete = 3;
-        for (int y = 0; y < 3; y++) {
-                
-            for (int x = 0; x < 3; x++) {
-
+        for (int y = 0; y < rows_deleted;    y++) {
+            for (int x = 0; x < shield_units_to_delete; x++) {
                 shields[shield][x][y].alive = false;
-                shields[shield][(SHIELD_WIDTH-1) -x][y].alive = false;
+                shields[shield][SHIELD_WIDTH - 1 - x][y].alive = false;
             }
-        shield_units_to_delete -= 1;
+            shield_units_to_delete -= 1;
         }
-    
+        shield_units_to_delete = 3; 
     }
 }
 
 void kill_shield_bottom_init(){
-     for (int shield = 0; shield < NUMBER_OF_SHIELDS; shield++) {
-        int shield_units_to_delete = 3;
-        for (int y = SHIELD_HEIGHT; y > 3; y++) {
-                
-            for (int x = 0; x < 3; x++) {
 
+    const int x_middle = SHIELD_WIDTH/2;
+    int left_pointer = x_middle;
+    int right_pointer = left_pointer + 1;
+
+    // empty contigous space
+    int x_first_pos = 5;
+    int x_end_pos = 17;
+    for (int shield = 0; shield < NUMBER_OF_SHIELDS; shield++) {
+        for (int y = SHIELD_HEIGHT - 1; y > SHIELD_HEIGHT - 5; y--){
+            for (int x = x_first_pos; x < x_end_pos; x++)
                 shields[shield][x][y].alive = false;
-                shields[shield][(SHIELD_WIDTH-1) -x][y].alive = false;
-            }
-        shield_units_to_delete -= 1;
         }
-    
-    }    
+    }
+    // empty shortning space
+    int x_offset = 1;
+    for (int shield = 0; shield < NUMBER_OF_SHIELDS; shield++){
+        for (int y = SHIELD_HEIGHT - 5; y > SHIELD_HEIGHT - 9; y--){
+            for (int x = x_first_pos+x_offset; x < x_end_pos-x_offset; x++){
+                shields[shield][x][y].alive = false;
+            }
+            x_offset += 1;
+        }
+        x_offset = 1;
+    }
 }
 
 
 
 void init_shields()
 {
-    int shield_pos_x = SHIELD_X_START;
-    int shield_pos_y = SHIELD_Y_START;
-
     for (int shield = 0; shield < NUMBER_OF_SHIELDS; shield++) {
 
-        for (int x = 0; x < SHIELD_WIDTH; x++) {
+        int shield_pos_x =
+            SHIELD_X_START + shield * (SHIELD_WIDTH * PIXEL_SIZE + SPACE_BETWEEN_SHIELDS);
 
+        for (int x = 0; x < SHIELD_WIDTH; x++) {
             for (int y = 0; y < SHIELD_HEIGHT; y++) {
 
                 shields[shield][x][y].alive = true;
-                shields[shield][x][y].x = shield_pos_x;
-                shields[shield][x][y].y = shield_pos_y;
 
-                shield_pos_y += PIXEL_SIZE;
+                shields[shield][x][y].x =
+                    shield_pos_x + x * PIXEL_SIZE;
+
+                shields[shield][x][y].y =
+                    SHIELD_Y_START + y * PIXEL_SIZE;
             }
-
-            shield_pos_x += PIXEL_SIZE;
         }
-
-        shield_pos_x += SPACE_BETWEEN_SHIELDS;
-        shield_pos_y = SHIELD_Y_START;
     }
     kill_shield_top_init();
+    kill_shield_bottom_init();
 }
 
 
@@ -107,7 +109,7 @@ void render_shields(SDL_Renderer *renderer)
                         SDL_Rect rect = {
                             shields[shield][start_col][y].x,
                             shields[shield][start_col][y].y,
-                            (end_col - start_col + 9) * 3,
+                            (end_col - start_col + 1) * 3,
                             3
                         };
 
