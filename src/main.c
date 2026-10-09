@@ -8,13 +8,13 @@
 
 
 
-#define FPS = 60
-#define FRAME_TIME 1000 / FPS
-
-const int CENTERE_X = WIDTH/2;
-const int CENTERE_Y = HEIGHT/2;
-const int PLAYER_MOVE_SPEED = 200;
-
+enum {
+    FPS = 60,
+    FRAME_TIME = 1000 / FPS,
+    CENTER_X = WIDTH / 2,
+    CENTER_Y = HEIGHT / 2,
+    PLAYER_MOVE_SPEED = 200
+};
 
 
 /*A Space invaders clone built from scratch
@@ -31,7 +31,7 @@ SWITCH TO DELTA TIME
 
 
 
-Player player = {CENTERE_X, CENTERE_Y + (CENTERE_Y*0.8)};
+Player player = {CENTER_X, CENTER_Y + (CENTER_Y*0.8)};
 PlayerBullet player_bullet;
 
 
@@ -149,14 +149,16 @@ void collision(){
     }       
     // overlap player_bullet + alien_bullet
     for(int i =0; i<MAX_ALIEN_BULLETS; i++){
-        int dy = alien_bullets[i].y - player.y;
-        int dx = player.x - alien_bullets[i].x;
-        if (dx > -10 && dx < 10 && dy > 20 ){
-            alien_bullets[i].alive = false;
-            alien_bullet_count --;
-            printf("death");
-            break;
-        }      
+        if(alien_bullets[i].alive == true){
+            int dy = alien_bullets[i].y - player.y;
+            int dx = player.x - alien_bullets[i].x;
+            if (dx > -10 && dx < 10 && dy > 20 ){
+                alien_bullets[i].alive = false;
+                alien_bullet_count --;
+                printf("death");
+                break;
+        }
+    }      
 
 
         if (!player_bullet.alive){break;}
@@ -172,27 +174,43 @@ void collision(){
         }      
     }
     for(int i =0; i<MAX_ALIEN_BULLETS; i++){
-        // overlap alien_bullet and shield
+        // shield collision
+        bool collied = false;
         for (int shield = 0; shield < NUMBER_OF_SHIELDS; shield++) {
             for (int y = 0; y < SHIELD_HEIGHT; y++) {
                 for (int x = 0; x < SHIELD_WIDTH; x++) {
+                    // overlap alien_bullet and shield
                     if (shields[shield][x][y].alive){
                         int dy = alien_bullets[i].y - shields[shield][x][y].y;
                         int dx = shields[shield][x][y].x - alien_bullets[i].x;
-
-                        if (dx > -9 && dx < 10 && dy > 2 ){
+                        
+                        if (dx > -2 && dx < 2 && dy > 2 ){
                             shields[shield][x][y].alive = false;
                             alien_bullets[i].alive = false;
                             alien_bullet_count --;
+                            shield_explosion(shield,x,y);
                         }
+                    // overlap player bullet
+                    if (player_bullet.alive ){
+                        int dy = shields[shield][x][y].y - player_bullet.y;
+                        int dx = shields[shield][x][y].x - player_bullet.x;
+                        if (dx > -2 && dx < 2 && dy >= 1 ){
+                            shields[shield][x][y].alive = false;
+                            player_bullet.alive = false;
+                            shield_explosion(shield,x,y);
+                        }
+                    }
+
+                        
                     }
                 }
             }
         }
     }
-
-
 }
+
+
+
 
 
 int main(int argc, char * argv[]){
@@ -230,7 +248,7 @@ int main(int argc, char * argv[]){
     player_bullet.y=10;
     float lastFrameTime = 0;
     bool new_line = false;
-    int ALIEN_SPEED =750;
+    int alien_speed =750;
     
     while(1){
         SDL_Event e;
@@ -299,7 +317,7 @@ int main(int argc, char * argv[]){
         lastFrameTime = currentTime;
         
         // update alien frame
-        if (currentTime - alien_frame_timer >= ALIEN_SPEED){
+        if (currentTime - alien_frame_timer >= alien_speed){
             alien_frame = !alien_frame;
             alien_frame_timer = currentTime;
             
@@ -308,6 +326,7 @@ int main(int argc, char * argv[]){
             }
             else{ 
                 new_line = update_alien_position(new_line);
+                alien_speed += 50;
                 new_line = false;
                 }
 			if(alien_end < alien_start){

@@ -199,7 +199,7 @@ float alien_speed = 21;
 int new_line_flag = 0;
 int new_line_distance = 6;
 bool update_alien_position(bool new_line){
-    if (aliens[0][alien_start].x <= 20 ||aliens[0][alien_end].x >= WIDTH - 40){
+    if (aliens[0][alien_start].x <= 30 ||aliens[0][alien_end].x >= WIDTH - 60){
         alien_direction *= -1;
         new_line_flag = 1;
         

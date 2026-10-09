@@ -22,6 +22,7 @@ typedef struct{
 void init_shields();
 void kill_shield_bottom_init();
 void kill_shield_top_init();
+void shield_explosion(int shield, int x, int y);
 void render_shields(SDL_Renderer * renderer);
 extern Shield shields[NUMBER_OF_SHIELDS][SHIELD_WIDTH][SHIELD_HEIGHT];
     

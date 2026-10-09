@@ -74,7 +74,20 @@ void init_shields()
     kill_shield_bottom_init();
 }
 
+void shield_explosion(int shield ,int x, int y){
+    for (int i = 0; i<10; i++){
+        // random number between -10 and 10
+        int random_x = x + (rand()%5) - 4;
+        int random_y = y + (rand()%5) - 4;
+        if (random_x <= SHIELD_WIDTH && random_x >= 0 &&
+            random_y <= SHIELD_HEIGHT&& random_y >= 0){
 
+                    shields[shield][random_x][random_y].alive = false;
+            }
+
+
+    }
+}
 
 
 
