@@ -106,7 +106,7 @@ int update_player_bullet(SDL_Renderer * renderer){
         player_bullet.alive = false;
     }
     //draw
-    SDL_Rect bullet_box= {player_bullet.x, player_bullet.y, BULLET_WIDTH ,BULLET_HEIGHT };
+    SDL_Rect bullet_box= {player_bullet.x, player_bullet.y, BULLET_WIDTH, BULLET_HEIGHT};
     SDL_SetRenderDrawColor(renderer,255,255,255,255);
     SDL_RenderFillRect(renderer, &bullet_box);
     SDL_RenderDrawRect(renderer, &bullet_box);

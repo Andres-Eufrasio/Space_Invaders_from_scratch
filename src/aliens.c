@@ -1,11 +1,6 @@
 #include "aliens.h"
+#include "hashmap.c"
 
-/*
-todo
-change does alien shoot to bool
-add all alien species
-add wasd controls
-*/
 
 Alien ** aliens;
 AlienBullet * alien_bullets;
@@ -15,7 +10,7 @@ int alien_end = ALIEN_COL-1;
 int alien_frame = 0;
 Uint32 alien_frame_timer = 0;
 
-void create_aliens(){
+void create_aliens(void){
     int alien_x = ALIEN_X;
     int alien_y = ALIEN_Y;
     
@@ -37,6 +32,19 @@ void create_aliens(){
     
 };
 
+// returns dead aline at 0,0 if no alien alive
+Alien generate_alien_shooter(void){
+    int alien_x = (rand() % (alien_end - alien_start + 1)) + alien_start;
+    int alien_y = rand() % ALIEN_ROW;
+}
+
+Alien find_closest_neighbour(int x, int y){
+    // add hashmap check 
+    find_closest_neighbour(x+1,y);
+    find_closest_neighbour(x-1,y);
+    find_closest_neighbour(x,y+1);
+    find_closest_neighbour(x,y-1);
+}
 
 Alien generate_alien_shooter(void)
 {
@@ -74,20 +82,17 @@ Alien generate_alien_shooter(void)
 }
 
 
-bool does_alien_shoot(void)
-{
+bool does_alien_shoot(void){
     int random = rand() % ALIEN_SHOOT_CHANGE;
 
     if (random == 1) {
         return true;
     }
-
     return false;
 }
 
 
-void init_alien_bullets(void)
-{
+void init_alien_bullets(void){
     alien_bullets = malloc(
         sizeof *alien_bullets * MAX_ALIEN_BULLETS
     );
@@ -107,8 +112,7 @@ void init_alien_bullets(void)
 }
 
 
-void alien_shoot(void)
-{
+void alien_shoot(void){
     // Don't create more bullets than the maximum
     if (alien_bullet_count >= MAX_ALIEN_BULLETS) {
         return;
@@ -161,11 +165,11 @@ void update_alien_bullet(SDL_Renderer * renderer){
     }
 }
 
-void update_alien_bullet_animation(){
+void update_alien_bullet_animation(void){
 }
 
 
-void update_alien_length(){
+void update_alien_length(void){
     bool left_alive = false;
     bool right_alive = false;
     for (int y = 0; y < ALIEN_ROW; y++) {
