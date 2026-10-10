@@ -25,16 +25,12 @@ TODO:
 ADD LOSING LIFE
 ADD MULTIPLE LIVES
 ADD TOP SPACESHIP FOR EXTRA POINTS
-ADD SHIELDS
 SWITCH TO DELTA TIME
 */
 
 
-
-Player player = {CENTER_X, CENTER_Y + (CENTER_Y*0.8)};
+Player player = {CENTER_X, CENTER_Y + (CENTER_Y*0.8), 3, 0};
 PlayerBullet player_bullet;
-
-
 
 rectangle calculate_square_from_center(float ox, float oy, int w, int h){
     rectangle rect;
@@ -118,95 +114,102 @@ int update_player_bullet(SDL_Renderer * renderer){
 };
 
 
-//gives slightly extra reach on hit box
-#define ALIEN_COLLISION_LEFT -2
-#define ALIEN_COLLISION_TOP -5
+static bool between(int v, int lo, int hi) {
+    return v > lo && v < hi;
+}
 
+static void kill_alien_bullet(int i) {
+    alien_bullets[i].alive = false;
+    alien_bullet_count--;
+}
 
-void collision(){
+// player bullet vs aliens
+static void collide_player_bullet_with_aliens(void) {
+    //gives slightly extra reach on hit box
+    int const ALIEN_COLLISION_LEFT = -3;
+    int const ALIEN_COLLISION_TOP = -5;
+    if (!player_bullet.alive) return;
 
-    // overlap player_bullet + aliens
-    for (int y = 0; y < ALIEN_ROW; y++){ 
-        for (int x = alien_start; x <= alien_end; x++){
-            if (!player_bullet.alive || !aliens[y][x].alive) {
-                continue;
-            }
-            else{
-                
-                int dy = player_bullet.y - aliens[y][x].y;
-                int dx = player_bullet.x - aliens[y][x].x;
-                
-                
-                if (dx > ALIEN_COLLISION_LEFT && dx < ALIEN_SIZE && dy > ALIEN_COLLISION_TOP && dy < ALIEN_SIZE) {
-                    player_bullet.alive = false;
-                    aliens[y][x].alive = false;
-                    player_bullet.x = player.x - 3;
-                    player_bullet.y = player.y;
-                    update_alien_length();
-                }
-            }
-        }
-    }       
-    // overlap player_bullet + alien_bullet
-    for(int i =0; i<MAX_ALIEN_BULLETS; i++){
-        if(alien_bullets[i].alive == true){
-            int dy = alien_bullets[i].y - player.y;
-            int dx = player.x - alien_bullets[i].x;
-            if (dx > -10 && dx < 10 && dy > 20 ){
-                alien_bullets[i].alive = false;
-                alien_bullet_count --;
-                printf("death");
-                break;
-        }
-    }      
+    for (int y = 0; y < ALIEN_ROW; y++) {
+        for (int x = alien_start; x <= alien_end; x++) {
+            if (!aliens[y][x].alive) continue;
 
+            int dx = player_bullet.x - aliens[y][x].x;
+            int dy = player_bullet.y - aliens[y][x].y;
 
-        if (!player_bullet.alive){break;}
-        if (alien_bullets[i].alive){
-            int dy = alien_bullets[i].y - player_bullet.y;
-            int dx = player_bullet.x - alien_bullets[i].x;
-            //test
-            if (dx > -10 && dx < 10 && dy > 20 ){
+            if (between(dx, ALIEN_COLLISION_LEFT, ALIEN_SIZE) &&
+                between(dy, ALIEN_COLLISION_TOP,  ALIEN_SIZE)) {
                 player_bullet.alive = false;
-                alien_bullets[i].alive = false;
-                alien_bullet_count --;
+                aliens[y][x].alive = false;
+                update_alien_length();
+                return; // bullet is used up
             }
-        }      
+        }
     }
-    for(int i =0; i<MAX_ALIEN_BULLETS; i++){
-        // shield collision
-        bool collied = false;
-        for (int shield = 0; shield < NUMBER_OF_SHIELDS; shield++) {
-            for (int y = 0; y < SHIELD_HEIGHT; y++) {
-                for (int x = 0; x < SHIELD_WIDTH; x++) {
-                    // overlap alien_bullet and shield
-                    if (shields[shield][x][y].alive){
-                        int dy = alien_bullets[i].y - shields[shield][x][y].y;
-                        int dx = shields[shield][x][y].x - alien_bullets[i].x;
-                        
-                        if (dx > -2 && dx < 2 && dy > 2 ){
-                            shields[shield][x][y].alive = false;
-                            alien_bullets[i].alive = false;
-                            alien_bullet_count --;
-                            shield_explosion(shield,x,y);
-                        }
-                    // overlap player bullet
-                    if (player_bullet.alive ){
-                        int dy = shields[shield][x][y].y - player_bullet.y;
-                        int dx = shields[shield][x][y].x - player_bullet.x;
-                        if (dx > -2 && dx < 2 && dy >= 1 ){
-                            shields[shield][x][y].alive = false;
-                            player_bullet.alive = false;
-                            shield_explosion(shield,x,y);
-                        }
-                    }
+}
 
-                        
+// alien bullets vs player and vs player bullet
+static void collide_alien_bullets(void) {
+    for (int i = 0; i < MAX_ALIEN_BULLETS; i++) {
+        if (!alien_bullets[i].alive) continue;
+
+        // vs player
+        if (between(player.x - alien_bullets[i].x, -10, 10) &&
+            alien_bullets[i].y - player.y > 20) {
+            kill_alien_bullet(i);
+            printf("death");
+            continue;
+        }
+
+        // vs player bullet
+        if (player_bullet.alive &&
+            between(player_bullet.x - alien_bullets[i].x, -10, 10) &&
+            alien_bullets[i].y - player_bullet.y > 20) {
+            player_bullet.alive = false;
+            kill_alien_bullet(i);
+        }
+    }
+}
+
+// both kinds of bullets vs shield blocks
+static void collide_shields(void) {
+    for (int s = 0; s < NUMBER_OF_SHIELDS; s++) {
+        for (int y = 0; y < SHIELD_HEIGHT; y++) {
+            for (int x = 0; x < SHIELD_WIDTH; x++) {
+                Shield *b = &shields[s][x][y];   
+                if (!b->alive) continue;
+
+                // alien bullets
+                for (int i = 0; i < MAX_ALIEN_BULLETS; i++) {
+                    if (!alien_bullets[i].alive) continue;
+
+                    if (between(b->x - alien_bullets[i].x, -2, 2) &&
+                        alien_bullets[i].y - b->y > 2) {
+                        b->alive = false;
+                        kill_alien_bullet(i);
+                        shield_explosion(s, x, y);
+                        break;
                     }
+                }
+                if (!b->alive) continue;
+
+                // player bullet
+                if (player_bullet.alive &&
+                    between(b->x - player_bullet.x, -2, 2) &&
+                    b->y - player_bullet.y >= 1) {
+                    b->alive = false;
+                    player_bullet.alive = false;
+                    shield_explosion(s, x, y);
                 }
             }
         }
     }
+}
+
+void collision(void) {
+    collide_player_bullet_with_aliens();
+    collide_alien_bullets();
+    collide_shields();
 }
 
 
@@ -246,60 +249,66 @@ int main(int argc, char * argv[]){
     player_bullet.alive=false;
     player_bullet.x=10;
     player_bullet.y=10;
-    float lastFrameTime = 0;
+    Uint32 lastFrameTime = 0;
     bool new_line = false;
     int alien_speed =750;
     
     while(1){
         SDL_Event e;
-        if (SDL_PollEvent(&e)){
-            if(e.type == SDL_QUIT){
-                break;
-            }
-            if(e.type == SDL_KEYDOWN){
-              switch (e.key.keysym.sym) {
-                case SDLK_LEFT:
-                    plyrctrl.left = true;
-                    break;
-                case SDLK_RIGHT:
-                    plyrctrl.right = true;
-                    break;
-                case SDLK_UP:
-                    plyrctrl.shoot = true;
-                    break;    
-                case SDLK_SPACE:
-                    plyrctrl.shoot = true;
-                    break;  
-                case SDLK_ESCAPE:
+        while (SDL_PollEvent(&e)) {
+            switch (e.type) {
+                case SDL_QUIT:
                     plyrQUIT = true;
                     break;
-                    
-                default:
-              }
-            }
-            if(e.type == SDL_KEYUP){
-              switch (e.key.keysym.sym) {
-                case SDLK_LEFT:
-                    plyrctrl.left = false;
-                    break;
-                case SDLK_RIGHT:
-                    plyrctrl.right = false;
-                    break;
-                case SDLK_UP:
-                    plyrctrl.shoot = false;
-                    break;    
-                case SDLK_SPACE:
-                    plyrctrl.shoot = false;
-                    break;    
-                default:
-                }
 
+                case SDL_KEYDOWN:
+                    if (e.key.repeat) {
+                        break;
+                    }
+
+                    switch (e.key.keysym.sym) {
+                        case SDLK_LEFT:
+                            plyrctrl.left = true;
+                            break;
+
+                        case SDLK_RIGHT:
+                            plyrctrl.right = true;
+                            break;
+
+                        case SDLK_SPACE:
+                        case SDLK_UP:
+                            plyrctrl.shoot = true;
+                            break;
+
+                        case SDLK_ESCAPE:
+                            plyrQUIT = true;
+                            break;
+                    }
+                    break;
+
+                case SDL_KEYUP:
+                    switch (e.key.keysym.sym) {
+                        case SDLK_LEFT:
+                            plyrctrl.left = false;
+                            break;
+
+                        case SDLK_RIGHT:
+                            plyrctrl.right = false;
+                            break;
+
+                        case SDLK_SPACE:
+                        case SDLK_UP:
+                            plyrctrl.shoot = false;
+                            break;
+                    }
+                    break;
             }
         }
-        
+
         if (plyrQUIT){
             break;
         }
+
         // calc for player/screen boundry
         if (player.x<=25){
             move_left_speed =0;
@@ -313,6 +322,7 @@ int main(int argc, char * argv[]){
 
         // start frame
         Uint32 currentTime = SDL_GetTicks();
+
         float dt = (currentTime - lastFrameTime) / 1000.0f;
         lastFrameTime = currentTime;
         

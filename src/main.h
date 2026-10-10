@@ -18,6 +18,7 @@ typedef struct
     float x;
     float y;
     int lives;
+    int points;
 }Player;
   
 /*
@@ -53,5 +54,7 @@ typedef struct
     int points;
 
 }score;
+
+
 
 #endif
