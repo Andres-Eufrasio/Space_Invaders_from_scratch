@@ -39,6 +39,12 @@ happy alien
 squid alien
 mothership
 */
+enum alien_species{
+    bottom = 1,
+    middle = 2,
+    top = 5,
+    mother = 10
+};
 typedef struct{
     float x;
     float y;

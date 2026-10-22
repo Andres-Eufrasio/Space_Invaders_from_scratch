@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
@@ -5,7 +6,7 @@
 #include "main.h"
 #include "render.h"
 #include "shield.h"
-
+#include "characters.c"
 
 
 enum {
@@ -29,7 +30,7 @@ SWITCH TO DELTA TIME
 */
 
 
-Player player = {CENTER_X, CENTER_Y + (CENTER_Y*0.8), 3, 0};
+Player player = {CENTER_X, CENTER_Y + (CENTER_Y*0.8), 3, 0, 1};
 PlayerBullet player_bullet;
 
 rectangle calculate_square_from_center(float ox, float oy, int w, int h){
@@ -141,6 +142,7 @@ static void collide_player_bullet_with_aliens(void) {
                 between(dy, ALIEN_COLLISION_TOP,  ALIEN_SIZE)) {
                 player_bullet.alive = false;
                 aliens[y][x].alive = false;
+                player.score = aliens[y][x].species*10*player.level;
                 update_alien_length();
                 return; // bullet is used up
             }
@@ -214,6 +216,62 @@ void collision(void) {
     collide_shields();
 }
 
+
+void render_score(){
+    char str_score[32];
+    snprintf(str_score, sizeof(char)*32, "%d", player.score);
+    
+
+}
+
+// Each sprite pixel is drawn as a 2x2 square and characters are separated
+// by a 4 pixel gap.
+#define CHARACTER_PIXEL_SIZE 2
+#define CHARACTER_SPACING 4
+
+static const char **find_character_sprite(char character){
+    if (character >= 'a' && character <= 'z'){
+        character -= 'a' - 'A';
+    }
+
+    for (size_t i = 0; i < sizeof(sprites) / sizeof(sprites[0]); i++){
+        if (sprites[i].character == character){
+            return sprites[i].sprite;
+        }
+    }
+
+    return NULL;
+}
+
+void render_characters(SDL_Renderer *renderer, int x, int y, const char *text){
+    int cursor_x = x;
+
+    for (const char *c = text; *c != '\0'; c++){
+        const char **sprite = find_character_sprite(*c);
+
+        if (sprite != NULL){
+            for (int row = 0; row < SPRITE_SIZE; row++){
+                for (int col = 0; col < SPRITE_SIZE; col++){
+                    if (sprite[row][col] == '1'){
+                        SDL_Rect pixel = {
+                            cursor_x + col * CHARACTER_PIXEL_SIZE,
+                            y + row * CHARACTER_PIXEL_SIZE,
+                            CHARACTER_PIXEL_SIZE,
+                            CHARACTER_PIXEL_SIZE
+                        };
+                        SDL_RenderFillRect(renderer, &pixel);
+                    }
+                }
+            }
+        }
+
+        cursor_x += (SPRITE_SIZE * CHARACTER_PIXEL_SIZE) + CHARACTER_SPACING;
+    }
+}
+
+void render_character(SDL_Renderer *renderer, int x, int y, const char *text){
+    render_characters(renderer, x, y, text);
+}
 
 
 
@@ -364,7 +422,9 @@ int main(int argc, char * argv[]){
 
         
         render_background(renderer);
+        SDL_SetRenderDrawColor(renderer,0,255,255,255);
 
+        render_character(renderer, 10, 10, "test");
         
         if(does_alien_shoot()){
             alien_shoot();

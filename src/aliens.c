@@ -142,6 +142,11 @@ void create_aliens(void)
                 alien_y,
                 true
             };
+            if (row == 0) aliens[row][col].species = top;
+            else if (row > 2) aliens[row][col].species = bottom;
+            else aliens[row][col].species = middle;
+            
+
 
             alien_x += ALIEN_SPACE_X;
         }
