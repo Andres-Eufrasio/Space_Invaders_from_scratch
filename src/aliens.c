@@ -1,30 +1,36 @@
 #include "aliens.h"
-#include "hashmap.h"
+
 #include <SDL2/SDL_stdinc.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-Alien ** aliens;
-AlienBullet * alien_bullets;
+
+Alien **aliens = NULL;
+AlienBullet *alien_bullets = NULL;
+
 int alien_bullet_count = 0;
 int alien_start = 0;
-int alien_end = ALIEN_COL-1;
+int alien_end = ALIEN_COL - 1;
 int alien_frame = 0;
 Uint32 alien_frame_timer = 0;
 
 
-// set utility 
+
 typedef struct {
     Alien **data;
     size_t size;
     size_t capacity;
 } Set;
 
-Set *set_init(void) {
+
+static Set *set_init(void)
+{
     Set *set = malloc(sizeof *set);
-    if (!set) return NULL;
+
+    if (set == NULL)
+        return NULL;
 
     set->data = NULL;
     set->size = 0;
@@ -33,8 +39,11 @@ Set *set_init(void) {
     return set;
 }
 
-bool set_contains(const Set *set, const Alien *alien) {
-    if (!set || !alien) return false;
+
+static bool set_contains(const Set *set, const Alien *alien)
+{
+    if (set == NULL || alien == NULL)
+        return false;
 
     for (size_t i = 0; i < set->size; i++) {
         if (set->data[i] == alien)
@@ -44,23 +53,33 @@ bool set_contains(const Set *set, const Alien *alien) {
     return false;
 }
 
-bool set_add(Set *set, Alien *alien) {
-    if (!set || !alien) return false;
+
+static bool set_add(Set *set, Alien *alien)
+{
+    if (set == NULL || alien == NULL)
+        return false;
 
     if (set_contains(set, alien))
         return true;
 
     if (set->size == set->capacity) {
-        size_t new_capacity = set->capacity
-            ? set->capacity * 2
-            : 4;
+        size_t new_capacity = set->capacity == 0
+            ? 4
+            : set->capacity * 2;
+
+        /* Prevent capacity arithmetic overflow. */
+        if (new_capacity < set->capacity ||
+            new_capacity > (size_t)-1 / sizeof *set->data) {
+            return false;
+        }
 
         Alien **new_data = realloc(
             set->data,
             new_capacity * sizeof *new_data
         );
 
-        if (!new_data) return false;
+        if (new_data == NULL)
+            return false;
 
         set->data = new_data;
         set->capacity = new_capacity;
@@ -70,116 +89,195 @@ bool set_add(Set *set, Alien *alien) {
     return true;
 }
 
-void set_free(Set *set) {
-    if (set) {
+
+static void set_free(Set *set)
+{
+    if (set != NULL) {
         free(set->data);
         free(set);
     }
 }
 
-void create_aliens(void){
+
+
+
+void create_aliens(void)
+{
     int alien_x = ALIEN_X;
     int alien_y = ALIEN_Y;
-    
-    // change to unsigned char
-    aliens = (Alien **)malloc(ALIEN_ROW * sizeof(Alien *));
-    if (!aliens){
-        printf("Alien allocation error on creation");
+
+
+    if (aliens != NULL) {
+        for (int row = 0; row < ALIEN_ROW; row++)
+            free(aliens[row]);
+
+        free(aliens);
+        aliens = NULL;
+    }
+
+    aliens = calloc(ALIEN_ROW, sizeof *aliens);
+
+    if (aliens == NULL) {
+        fprintf(stderr, "Alien allocation error on creation\n");
         abort();
     }
-    for (int y=0; y<ALIEN_ROW; y++){
-        aliens[y] = (Alien *)malloc(ALIEN_COL * sizeof(Alien));
-        for (int x=0; x<ALIEN_COL; x++){
-            aliens[y][x] = (Alien){alien_x, alien_y, true};
+
+    for (int row = 0; row < ALIEN_ROW; row++) {
+        aliens[row] = malloc(ALIEN_COL * sizeof *aliens[row]);
+
+        if (aliens[row] == NULL) {
+            for (int i = 0; i < row; i++)
+                free(aliens[i]);
+
+            free(aliens);
+            aliens = NULL;
+
+            fprintf(stderr, "Alien row allocation error\n");
+            abort();
+        }
+
+        for (int col = 0; col < ALIEN_COL; col++) {
+            aliens[row][col] = (Alien){
+                alien_x,
+                alien_y,
+                true
+            };
+
             alien_x += ALIEN_SPACE_X;
         }
+
         alien_y += ALIEN_SPACE_Y;
         alien_x = ALIEN_X;
     }
-    
-};
+
+    alien_start = 0;
+    alien_end = ALIEN_COL - 1;
+}
+
+
 
 
 typedef struct {
-    int x;
-    int y;
+    int row;
+    int col;
 } Position;
 
-Alien* find_closest_neighbour(int x, int y, Set* set, bool* found) {
-    *found = false;
 
-    // Queue for BFS
-    Position queue[ALIEN_ROW * ALIEN_COL];
-    int head = 0;
-    int tail = 0;
 
-    // Validate starting position
-    if (x < 0 || x >= ALIEN_ROW ||
-        y < 0 || y >= ALIEN_COL) {
+static Alien *find_closest_neighbour(int start_row, int start_col)
+{
+    if (aliens == NULL)
+        return NULL;
+
+    if (start_row < 0 || start_row >= ALIEN_ROW ||
+        start_col < 0 || start_col >= ALIEN_COL) {
         return NULL;
     }
 
-    Alien* start = &aliens[x][y];
+    const size_t max_aliens = (size_t)ALIEN_ROW * ALIEN_COL;
 
-    if (set_contains(set, start)) {
+    if (ALIEN_ROW <= 0 || ALIEN_COL <= 0)
+        return NULL;
+
+    Position *queue = malloc(max_aliens * sizeof *queue);
+
+    if (queue == NULL)
+        return NULL;
+
+    Set *visited = set_init();
+
+    if (visited == NULL) {
+        free(queue);
         return NULL;
     }
 
-    // Mark as visited when enqueued
-    set_add(set, start);
-    queue[tail++] = (Position){x, y};
+    size_t head = 0;
+    size_t tail = 0;
 
-    int dx[] = {1, -1, 0, 0};
-    int dy[] = {0, 0, 1, -1};
+    Alien *start = &aliens[start_row][start_col];
+
+    if (!set_add(visited, start)) {
+        set_free(visited);
+        free(queue);
+        return NULL;
+    }
+
+    queue[tail++] = (Position){start_row, start_col};
+
+    const int dr[] = {1, -1, 0, 0};
+    const int dc[] = {0, 0, 1, -1};
 
     while (head < tail) {
         Position pos = queue[head++];
-        Alien* current_alien = &aliens[pos.x][pos.y];
 
-        // First living alien encountered is the closest
-        if (current_alien->alive) {
-            *found = true;
-            return current_alien;
+        Alien *current = &aliens[pos.row][pos.col];
+
+        /* BFS guarantees the first living alien is nearest. */
+        if (current->alive) {
+            set_free(visited);
+            free(queue);
+            return current;
         }
 
-        // Enqueue all unvisited neighbours
         for (int i = 0; i < 4; i++) {
-            int nx = pos.x + dx[i];
-            int ny = pos.y + dy[i];
+            int next_row = pos.row + dr[i];
+            int next_col = pos.col + dc[i];
 
-            if (nx < 0 || nx >= ALIEN_ROW ||
-                ny < 0 || ny >= ALIEN_COL) {
+            if (next_row < 0 || next_row >= ALIEN_ROW ||
+                next_col < 0 || next_col >= ALIEN_COL) {
                 continue;
             }
 
-            Alien* neighbour = &aliens[nx][ny];
+            Alien *neighbour = &aliens[next_row][next_col];
 
-            if (set_contains(set, neighbour)) {
+            if (set_contains(visited, neighbour))
                 continue;
+
+            if (!set_add(visited, neighbour)) {
+                set_free(visited);
+                free(queue);
+                return NULL;
             }
 
-            set_add(set, neighbour);
-            queue[tail++] = (Position){nx, ny};
+            queue[tail++] = (Position){next_row, next_col};
         }
     }
 
-    // No living alien found
+    set_free(visited);
+    free(queue);
+
     return NULL;
 }
 
-// returns dead aline at 0,0 if no alien alive
-Alien* generate_alien_shooter(void){
-    int alien_x = (rand() % (alien_end - alien_start + 1)) + alien_start;
-    int alien_y = rand() % ALIEN_ROW;
+Alien *generate_alien_shooter(void)
+{
+    if (aliens == NULL)
+        return NULL;
 
-    if (aliens[alien_x][alien_y].alive)
-        return &aliens[alien_x][alien_y];
+    if (ALIEN_ROW <= 0 || ALIEN_COL <= 0)
+        return NULL;
+    // bound check
+    int start = alien_start;
+    int end = alien_end;
 
-    Set* set_checked_aliens = set_init();
-    _Bool* found = false;
-    Alien* chosen = find_closest_neighbour(alien_x, alien_y, set_checked_aliens, found);
-    set_free(set_checked_aliens);
-    return chosen; 
+    if (start < 0)
+        start = 0;
+
+    if (end >= ALIEN_COL)
+        end = ALIEN_COL - 1;
+
+    if (start > end)
+        return NULL;
+
+    int col = start + rand() % (end - start + 1);
+    int row = rand() % ALIEN_ROW;
+
+    Alien *selected = &aliens[row][col];
+
+    if (selected->alive)
+        return selected;
+
+    return find_closest_neighbour(row, col);
 }
 
 
