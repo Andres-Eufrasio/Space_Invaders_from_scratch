@@ -1,6 +1,10 @@
 #include "aliens.h"
-#include "hashmap.c"
-
+#include "hashmap.h"
+#include <SDL2/SDL_stdinc.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 Alien ** aliens;
 AlienBullet * alien_bullets;
@@ -9,6 +13,69 @@ int alien_start = 0;
 int alien_end = ALIEN_COL-1;
 int alien_frame = 0;
 Uint32 alien_frame_timer = 0;
+
+
+// set utility 
+typedef struct {
+    Alien **data;
+    size_t size;
+    size_t capacity;
+} Set;
+
+Set *set_init(void) {
+    Set *set = malloc(sizeof *set);
+    if (!set) return NULL;
+
+    set->data = NULL;
+    set->size = 0;
+    set->capacity = 0;
+
+    return set;
+}
+
+bool set_contains(const Set *set, const Alien *alien) {
+    if (!set || !alien) return false;
+
+    for (size_t i = 0; i < set->size; i++) {
+        if (set->data[i] == alien)
+            return true;
+    }
+
+    return false;
+}
+
+bool set_add(Set *set, Alien *alien) {
+    if (!set || !alien) return false;
+
+    if (set_contains(set, alien))
+        return true;
+
+    if (set->size == set->capacity) {
+        size_t new_capacity = set->capacity
+            ? set->capacity * 2
+            : 4;
+
+        Alien **new_data = realloc(
+            set->data,
+            new_capacity * sizeof *new_data
+        );
+
+        if (!new_data) return false;
+
+        set->data = new_data;
+        set->capacity = new_capacity;
+    }
+
+    set->data[set->size++] = alien;
+    return true;
+}
+
+void set_free(Set *set) {
+    if (set) {
+        free(set->data);
+        free(set);
+    }
+}
 
 void create_aliens(void){
     int alien_x = ALIEN_X;
@@ -32,54 +99,125 @@ void create_aliens(void){
     
 };
 
-// returns dead aline at 0,0 if no alien alive
-Alien generate_alien_shooter(void){
-    int alien_x = (rand() % (alien_end - alien_start + 1)) + alien_start;
-    int alien_y = rand() % ALIEN_ROW;
-}
 
-Alien find_closest_neighbour(int x, int y){
-    // add hashmap check 
-    find_closest_neighbour(x+1,y);
-    find_closest_neighbour(x-1,y);
-    find_closest_neighbour(x,y+1);
-    find_closest_neighbour(x,y-1);
-}
+typedef struct {
+    int x;
+    int y;
+} Position;
 
-Alien generate_alien_shooter(void)
-{
-    int alien_x = (rand() % (alien_end - alien_start + 1)) + alien_start;
-    int alien_y = rand() % ALIEN_ROW;
+Alien* find_closest_neighbour(int x, int y, Set* set, bool* found) {
+    *found = false;
 
-    int start_x = alien_x;
-    int start_y = alien_y;
+    // Queue for BFS
+    Position queue[ALIEN_ROW * ALIEN_COL];
+    int head = 0;
+    int tail = 0;
 
-    do {
-        if (aliens[alien_y][alien_x].alive) {
-            return aliens[alien_y][alien_x];
+    // Validate starting position
+    if (x < 0 || x >= ALIEN_ROW ||
+        y < 0 || y >= ALIEN_COL) {
+        return NULL;
+    }
+
+    Alien* start = &aliens[x][y];
+
+    if (set_contains(set, start)) {
+        return NULL;
+    }
+
+    // Mark as visited when enqueued
+    set_add(set, start);
+    queue[tail++] = (Position){x, y};
+
+    int dx[] = {1, -1, 0, 0};
+    int dy[] = {0, 0, 1, -1};
+
+    while (head < tail) {
+        Position pos = queue[head++];
+        Alien* current_alien = &aliens[pos.x][pos.y];
+
+        // First living alien encountered is the closest
+        if (current_alien->alive) {
+            *found = true;
+            return current_alien;
         }
 
-        alien_x++;
+        // Enqueue all unvisited neighbours
+        for (int i = 0; i < 4; i++) {
+            int nx = pos.x + dx[i];
+            int ny = pos.y + dy[i];
 
-        if (alien_x > alien_end) {
-            alien_x = alien_start;
-
-            alien_y++;
-
-            if (alien_y >= ALIEN_ROW) {
-                alien_y = 0;
+            if (nx < 0 || nx >= ALIEN_ROW ||
+                ny < 0 || ny >= ALIEN_COL) {
+                continue;
             }
+
+            Alien* neighbour = &aliens[nx][ny];
+
+            if (set_contains(set, neighbour)) {
+                continue;
+            }
+
+            set_add(set, neighbour);
+            queue[tail++] = (Position){nx, ny};
         }
+    }
 
-    } while (alien_x != start_x || alien_y != start_y);
-
-    // No alive alien was found
-    return (Alien){
-        .x = 0,
-        .y = 0,
-        .alive = false
-    };
+    // No living alien found
+    return NULL;
 }
+
+// returns dead aline at 0,0 if no alien alive
+Alien* generate_alien_shooter(void){
+    int alien_x = (rand() % (alien_end - alien_start + 1)) + alien_start;
+    int alien_y = rand() % ALIEN_ROW;
+
+    if (aliens[alien_x][alien_y].alive)
+        return &aliens[alien_x][alien_y];
+
+    Set* set_checked_aliens = set_init();
+    _Bool* found = false;
+    Alien* chosen = find_closest_neighbour(alien_x, alien_y, set_checked_aliens, found);
+    set_free(set_checked_aliens);
+    return chosen; 
+}
+
+
+
+// Alien generate_alien_shooter(void)
+// {
+//     int alien_x = (rand() % (alien_end - alien_start + 1)) + alien_start;
+//     int alien_y = rand() % ALIEN_ROW;
+//
+//     int start_x = alien_x;
+//     int start_y = alien_y;
+//
+//     do {
+//         if (aliens[alien_y][alien_x].alive) {
+//             return aliens[alien_y][alien_x];
+//         }
+//
+//         alien_x++;
+//
+//         if (alien_x > alien_end) {
+//             alien_x = alien_start;
+//
+//             alien_y++;
+//
+//             if (alien_y >= ALIEN_ROW) {
+//                 alien_y = 0;
+//             }
+//         }
+//
+//     } while (alien_x != start_x || alien_y != start_y);
+//
+//     // No alive alien was found
+//     return (Alien){
+//         .x = 0,
+//         .y = 0,
+//         .alive = false
+//     };
+// }
 
 
 bool does_alien_shoot(void){
@@ -119,7 +257,7 @@ void alien_shoot(void){
     }
 
     // Find an alien to shoot
-    Alien buff = generate_alien_shooter();
+    Alien buff = *generate_alien_shooter();
 
     // No alive alien was found
     if (!buff.alive) {

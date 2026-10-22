@@ -157,7 +157,9 @@ static void collide_alien_bullets(void) {
         if (between(player.x - alien_bullets[i].x, -10, 10) &&
             alien_bullets[i].y - player.y > 20) {
             kill_alien_bullet(i);
-            printf("death");
+            player.lives -= 1;
+            printf("%d",player.lives);
+
             continue;
         }
 
