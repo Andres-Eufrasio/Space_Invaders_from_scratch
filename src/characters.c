@@ -292,6 +292,23 @@ const char *z[SPRITE_SIZE] = {
     "11111"
 };
 
+// symbols //
+const char *less_than[SPRITE_SIZE] = {
+    "00010",
+    "00100",
+    "01000",
+    "00100",
+    "00010"
+};
+
+const char *greater_than[SPRITE_SIZE] = {
+    "01000",
+    "00100",
+    "00010",
+    "00100",
+    "01000"
+};
+
 
 typedef struct {
     char character;
@@ -312,5 +329,7 @@ Character sprites[] = {
     {'0', zero}, {'1', one}, {'2', two},
     {'3', three}, {'4', four}, {'5', five},
     {'6', six}, {'7', seven}, {'8', eight},
-    {'9', nine}
+    {'9', nine},
+
+    {'<', less_than}, {'>', greater_than}
 };

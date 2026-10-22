@@ -142,7 +142,7 @@ static void collide_player_bullet_with_aliens(void) {
                 between(dy, ALIEN_COLLISION_TOP,  ALIEN_SIZE)) {
                 player_bullet.alive = false;
                 aliens[y][x].alive = false;
-                player.score = aliens[y][x].species*10*player.level;
+                player.score += aliens[y][x].species*10*player.level;
                 update_alien_length();
                 return; // bullet is used up
             }
@@ -424,7 +424,11 @@ int main(int argc, char * argv[]){
         render_background(renderer);
         SDL_SetRenderDrawColor(renderer,0,255,255,255);
 
-        render_character(renderer, 10, 10, "test");
+        
+        char current_score[32];
+        snprintf(current_score, sizeof(current_score), "%d", player.score);
+        render_character(renderer, 10, 10, "SCORE <1>  High score");
+        render_character(renderer, 10, 30, current_score);
         
         if(does_alien_shoot()){
             alien_shoot();
