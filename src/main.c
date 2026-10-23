@@ -25,6 +25,9 @@ created 06/02/06
 TODO:
 ADD LOSING LIFE
 ADD MULTIPLE LIVES
+- draw the multiple lives character
+- add bar under user 
+Make it so that the player score is centered under score and high score
 ADD TOP SPACESHIP FOR EXTRA POINTS
 SWITCH TO DELTA TIME
 */
@@ -32,6 +35,7 @@ SWITCH TO DELTA TIME
 
 Player player = {CENTER_X, CENTER_Y + (CENTER_Y*0.8), 3, 0, 1};
 PlayerBullet player_bullet;
+int alien_speed;
 
 rectangle calculate_square_from_center(float ox, float oy, int w, int h){
     rectangle rect;
@@ -143,6 +147,7 @@ static void collide_player_bullet_with_aliens(void) {
                 player_bullet.alive = false;
                 aliens[y][x].alive = false;
                 player.score += aliens[y][x].species*10*player.level;
+                if (alien_speed >= 50) alien_speed -= 10;
                 update_alien_length();
                 return; // bullet is used up
             }
@@ -221,7 +226,6 @@ void render_score(){
     char str_score[32];
     snprintf(str_score, sizeof(char)*32, "%d", player.score);
     
-
 }
 
 // Each sprite pixel is drawn as a 2x2 square and characters are separated
@@ -274,8 +278,6 @@ void render_character(SDL_Renderer *renderer, int x, int y, const char *text){
 }
 
 
-
-
 int main(int argc, char * argv[]){
     srand(time(0));
     if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO) != 0){
@@ -311,7 +313,7 @@ int main(int argc, char * argv[]){
     player_bullet.y=10;
     Uint32 lastFrameTime = 0;
     bool new_line = false;
-    int alien_speed =750;
+    alien_speed = 750;
     
     while(1){
         SDL_Event e;
@@ -396,7 +398,6 @@ int main(int argc, char * argv[]){
             }
             else{ 
                 new_line = update_alien_position(new_line);
-                alien_speed += 50;
                 new_line = false;
                 }
 			if(alien_end < alien_start){
@@ -418,13 +419,12 @@ int main(int argc, char * argv[]){
         collision();
         SDL_SetRenderTarget(renderer, texture);
         //SDL_RenderClear(renderer);
-        
 
         
         render_background(renderer);
-        SDL_SetRenderDrawColor(renderer,0,255,255,255);
 
-        
+        //Score rendering
+        SDL_SetRenderDrawColor(renderer,0,255,255,255);
         char current_score[32];
         snprintf(current_score, sizeof(current_score), "%d", player.score);
         render_character(renderer, 10, 10, "SCORE <1>  High score");

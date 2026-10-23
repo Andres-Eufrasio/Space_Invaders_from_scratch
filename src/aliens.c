@@ -440,7 +440,7 @@ void update_alien_length(void){
 };
 
 int alien_direction = 1;
-float alien_speed = 21; 
+float f_alien_speed = 21; 
 int new_line_flag = 0;
 int new_line_distance = 6;
 bool update_alien_position(bool new_line){
@@ -452,7 +452,7 @@ bool update_alien_position(bool new_line){
     
     for (int y=0; y<ALIEN_ROW; y++){ 
         for (int x=alien_start; x<=alien_end; x++){
-            aliens[y][x].x += alien_direction*alien_speed;
+            aliens[y][x].x += alien_direction*f_alien_speed ;
         }
 
     if(new_line_flag){
