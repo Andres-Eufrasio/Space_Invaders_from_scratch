@@ -1,7 +1,11 @@
+#include <SDL2/SDL_rect.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_surface.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
+#include <string.h>
 #include <time.h>
 #include "main.h"
 #include "render.h"
@@ -27,6 +31,8 @@ ADD LOSING LIFE
 ADD MULTIPLE LIVES
 - draw the multiple lives character
 - add bar under user 
+Score
+- ensure the main score is positioned well
 Make it so that the player score is centered under score and high score
 ADD TOP SPACESHIP FOR EXTRA POINTS
 SWITCH TO DELTA TIME
@@ -57,7 +63,7 @@ void render_background(SDL_Renderer * renderer){
 }
 
 
-void draw_player(SDL_Renderer * renderer){
+void render_player(SDL_Renderer * renderer){
     SDL_SetRenderDrawColor(renderer,0,255,0,255);
 
     rectangle pbb = calculate_square_from_center(player.x, player.y, 48, 15);
@@ -83,11 +89,39 @@ void draw_player(SDL_Renderer * renderer){
     SDL_Rect player_gun_head = {pgh.x, pgh.y-18, pgh.w, pgh.h};
     SDL_RenderFillRect(renderer, &player_gun_head);
     SDL_RenderDrawRect(renderer, &player_gun_head);
-
-    
-
 }
 
+void render_player_lives(SDL_Renderer * renderer){
+    SDL_SetRenderDrawColor(renderer,0,255,0,255);
+
+    int x = 30;
+    int y = HEIGHT - 10;
+    for (int lives = 0; lives < player.lives-1; lives ++){
+        x += lives*60;
+        rectangle pbb = calculate_square_from_center(x, y, 48, 15);
+        rectangle pb  = calculate_square_from_center(x, y, 40, 15);
+        rectangle pgb = calculate_square_from_center(x, y, 10, 10);
+        rectangle pgh = calculate_square_from_center(x, y, 3, 5);
+        // Render player Body
+        SDL_Rect player_body_bottom = {pbb.x, pbb.y, pbb.w, pbb.h};
+        SDL_Rect player_body = {pb.x, pb.y-3, pb.w, pb.h};
+
+        SDL_RenderFillRect(renderer, &player_body_bottom);
+        SDL_RenderDrawRect(renderer, &player_body_bottom);
+
+        SDL_RenderFillRect(renderer, &player_body);
+        SDL_RenderDrawRect(renderer, &player_body);
+
+        // Render player gun
+        SDL_Rect player_gun_base = {pgb.x, pgb.y-13, pgb.w, pgb.h};
+        SDL_RenderFillRect(renderer, &player_gun_base);
+        SDL_RenderDrawRect(renderer, &player_gun_base);   
+
+        SDL_Rect player_gun_head = {pgh.x, pgh.y-18, pgh.w, pgh.h};
+        SDL_RenderFillRect(renderer, &player_gun_head);
+        SDL_RenderDrawRect(renderer, &player_gun_head);
+    }
+}
 
 int player_shoot(){
     if (player_bullet.alive){
@@ -222,16 +256,17 @@ void collision(void) {
 }
 
 
-void render_score(){
-    char str_score[32];
-    snprintf(str_score, sizeof(char)*32, "%d", player.score);
-    
-}
-
 // Each sprite pixel is drawn as a 2x2 square and characters are separated
 // by a 4 pixel gap.
 #define CHARACTER_PIXEL_SIZE 2
-#define CHARACTER_SPACING 4
+#define CHARACTER_SPACING 2
+#define CHARACTER_ADVANCE ((SPRITE_SIZE * CHARACTER_PIXEL_SIZE) + CHARACTER_SPACING)
+// Top bar layout: labels sit on the first row and values are centred under them.
+#define TOPBAR_LABEL_Y 10
+#define TOPBAR_VALUE_Y 30
+#define TOPBAR_SCORE_X 10
+#define TOPBAR_HIGH_SCORE_X (TOPBAR_SCORE_X + 9 * CHARACTER_ADVANCE)
+#define TOPBAR_LEVEL_X (TOPBAR_SCORE_X + 23 * CHARACTER_ADVANCE)
 
 static const char **find_character_sprite(char character){
     if (character >= 'a' && character <= 'z'){
@@ -275,6 +310,41 @@ void render_characters(SDL_Renderer *renderer, int x, int y, const char *text){
 
 void render_character(SDL_Renderer *renderer, int x, int y, const char *text){
     render_characters(renderer, x, y, text);
+}
+
+static int center_text_x(int section_x, const char *section_label, const char *text){
+    int section_width = (int)strlen(section_label) * CHARACTER_ADVANCE - CHARACTER_SPACING;
+    int text_width = (int)strlen(text) * CHARACTER_ADVANCE - CHARACTER_SPACING;
+    return section_x + (section_width - text_width) / 2;
+}
+
+void render_high_score(SDL_Renderer * renderer){
+    char current_score[32];
+    snprintf(current_score, sizeof(current_score), "%d", player.score);
+    render_character(renderer, center_text_x(TOPBAR_HIGH_SCORE_X, "<High score>", current_score), TOPBAR_VALUE_Y, current_score);
+}
+void render_level(SDL_Renderer * renderer){
+    char current_level[32];
+    snprintf(current_level, sizeof(current_level), "%d", player.level);
+    render_character(renderer, center_text_x(TOPBAR_LEVEL_X, "<Level>", current_level), TOPBAR_VALUE_Y, current_level);
+    
+}
+void render_topbar(SDL_Renderer * renderer){
+    SDL_SetRenderDrawColor(renderer, 255, 255,255 ,0);
+    char current_score[32];
+    snprintf(current_score, sizeof(current_score), "%d", player.score);
+
+    render_character(renderer, center_text_x(TOPBAR_SCORE_X, "<SCORE>", current_score), TOPBAR_VALUE_Y, current_score);
+    render_high_score(renderer);
+    render_level(renderer);
+}
+
+
+void render_bottombar(SDL_Renderer * renderer){
+    SDL_SetRenderDrawColor(renderer, 0, 100 ,0, 0);
+    SDL_Rect bottombar_line = {0, player.y+20, WIDTH, 3};
+    SDL_RenderFillRect(renderer, &bottombar_line);
+    SDL_RenderDrawRect(renderer, &bottombar_line);
 }
 
 
@@ -425,11 +495,11 @@ int main(int argc, char * argv[]){
 
         //Score rendering
         SDL_SetRenderDrawColor(renderer,0,255,255,255);
-        char current_score[32];
-        snprintf(current_score, sizeof(current_score), "%d", player.score);
-        render_character(renderer, 10, 10, "SCORE <1>  High score");
-        render_character(renderer, 10, 30, current_score);
-        
+        render_topbar(renderer);
+        render_character(renderer, TOPBAR_SCORE_X, TOPBAR_LABEL_Y, "<SCORE>  <High score>  <Level>");       
+        render_bottombar(renderer);
+        render_player_lives(renderer);
+            
         if(does_alien_shoot()){
             alien_shoot();
         }
@@ -438,7 +508,7 @@ int main(int argc, char * argv[]){
         render_aliens(renderer);
         render_shields(renderer);
         
-        draw_player(renderer);
+        render_player(renderer);
 
         SDL_SetRenderTarget(renderer, NULL);
         
