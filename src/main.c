@@ -8,6 +8,7 @@
 #include <string.h>
 #include <time.h>
 #include "main.h"
+#include "aliens.h"
 #include "render.h"
 #include "shield.h"
 #include "characters.c"
@@ -18,7 +19,8 @@ enum {
     FRAME_TIME = 1000 / FPS,
     CENTER_X = WIDTH / 2,
     CENTER_Y = HEIGHT / 2,
-    PLAYER_MOVE_SPEED = 200
+    PLAYER_MOVE_SPEED = 200,
+    ALIEN_START_SPEED = 750
 };
 
 
@@ -27,14 +29,12 @@ By Andres Eufrasio Tinajero
 created 06/02/06
 
 TODO:
-ADD LOSING LIFE
-ADD MULTIPLE LIVES
-- draw the multiple lives character
-- add bar under user 
-Score
-- ensure the main score is positioned well
-Make it so that the player score is centered under score and high score
+ADD add animation on new alien level
+ADD animation on lost life
+Add home menu
+Add aliens diffrent color per species
 ADD TOP SPACESHIP FOR EXTRA POINTS
+Add save top aliens scores to external file
 SWITCH TO DELTA TIME
 */
 
@@ -383,7 +383,7 @@ int main(int argc, char * argv[]){
     player_bullet.y=10;
     Uint32 lastFrameTime = 0;
     bool new_line = false;
-    alien_speed = 750;
+    alien_speed = ALIEN_START_SPEED;
     
     while(1){
         SDL_Event e;
@@ -470,8 +470,12 @@ int main(int argc, char * argv[]){
                 new_line = update_alien_position(new_line);
                 new_line = false;
                 }
+            // new level
 			if(alien_end < alien_start){
-				break;
+				alien_level_up();
+                alien_speed = ALIEN_START_SPEED + (player.level*5);
+                player.level ++;
+
 			}
         }
         
@@ -525,7 +529,7 @@ int main(int argc, char * argv[]){
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
-    return 1;
+    return 0;
 }  
 
 

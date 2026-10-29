@@ -1,10 +1,10 @@
 #ifndef ALIEN_H
 #define ALIEN_H
+#include "render.h"
+#include <SDL2/SDL.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <SDL2/SDL.h>
-#include "render.h"
 
 rectangle calculate_square_from_center(float ox, float oy, int w, int h);
 
@@ -28,9 +28,9 @@ void init_alien_bullets();
 bool update_alien_position(bool new_line);
 bool does_alien_shoot();
 void alien_shoot();
+void alien_level_up();
 void update_alien_bullet(SDL_Renderer *renderer);
 void render_aliens(SDL_Renderer *renderer);
-
 
 /*
 Species list
@@ -39,25 +39,18 @@ happy alien
 squid alien
 mothership
 */
-enum alien_species{
-    bottom = 1,
-    middle = 2,
-    top = 5,
-    mother = 10
-};
-typedef struct{
-    float x;
-    float y;
-    bool alive;
-    int species; 
-}Alien;
+enum alien_species { bottom = 1, middle = 2, top = 5, mother = 10 };
+typedef struct {
+  float x;
+  float y;
+  bool alive;
+  int species;
+} Alien;
 
-typedef struct 
-{
-    float x;
-    float y;
-    bool alive;
-}AlienBullet;
-
+typedef struct {
+  float x;
+  float y;
+  bool alive;
+} AlienBullet;
 
 #endif

@@ -15,6 +15,10 @@ int alien_start = 0;
 int alien_end = ALIEN_COL - 1;
 int alien_frame = 0;
 Uint32 alien_frame_timer = 0;
+int alien_direction = 1;
+float f_alien_speed = 21; 
+int new_line_flag = 0;
+int new_line_distance = 6;
 
 
 
@@ -159,7 +163,30 @@ void create_aliens(void)
     alien_end = ALIEN_COL - 1;
 }
 
+void alien_level_up(){
 
+    alien_start = 0;
+    alien_end = ALIEN_COL - 1;
+
+    int alien_x = ALIEN_X;
+    int alien_y = ALIEN_Y;
+
+    for (int row = 0; row < ALIEN_ROW; row++) {
+
+        for (int col = 0; col < ALIEN_COL; col++) {
+            aliens[row][col].alive = true;
+            aliens[row][col].x = alien_x;
+            aliens[row][col].y = alien_y;
+
+            alien_x += ALIEN_SPACE_X;
+        }
+        alien_y += ALIEN_SPACE_Y;
+        alien_x = ALIEN_X;
+    }
+
+    alien_direction = 1;
+    new_line_flag = 0;
+}
 
 
 typedef struct {
@@ -410,39 +437,29 @@ void update_alien_bullet_animation(void){
 }
 
 
-void update_alien_length(void){
-    bool left_alive = false;
-    bool right_alive = false;
+static bool alien_column_alive(int col){
     for (int y = 0; y < ALIEN_ROW; y++) {
-        if (aliens[y][alien_start].alive) {
-            left_alive = true;
+        if (aliens[y][col].alive) {
+            return true;
         }
     }
-    for (int y = 0; y < ALIEN_ROW; y++) {
-        if (aliens[y][alien_end].alive) {
-            right_alive = true;
-        }
-    }
+    return false;
+}
 
-    if (!left_alive) {
+void update_alien_length(void){
+    // trim empty outer columns
+    while (alien_start <= alien_end && !alien_column_alive(alien_start)) {
         alien_start++;
-        
     }
-    if (!right_alive) {
+    while (alien_start <= alien_end && !alien_column_alive(alien_end)) {
         alien_end--;
-        
     }
-    //call recursively until the right length is created
-    if (!left_alive || !right_alive){
-        update_alien_length();
+    // no aliens left: leave the bounds crossed so main starts a new level
+    if (alien_start > alien_end) {
+        alien_end = alien_start - 1;
     }
-    
 };
 
-int alien_direction = 1;
-float f_alien_speed = 21; 
-int new_line_flag = 0;
-int new_line_distance = 6;
 bool update_alien_position(bool new_line){
     if (aliens[0][alien_start].x <= 30 ||aliens[0][alien_end].x >= WIDTH - 60){
         alien_direction *= -1;
