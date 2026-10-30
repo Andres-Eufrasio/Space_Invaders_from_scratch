@@ -20,7 +20,6 @@ enum {
     CENTER_X = WIDTH / 2,
     CENTER_Y = HEIGHT / 2,
     PLAYER_MOVE_SPEED = 200,
-    ALIEN_START_SPEED = 750
 };
 
 
@@ -165,8 +164,8 @@ static void kill_alien_bullet(int i) {
 // player bullet vs aliens
 static void collide_player_bullet_with_aliens(void) {
     //gives slightly extra reach on hit box
-    int const ALIEN_COLLISION_LEFT = -3;
-    int const ALIEN_COLLISION_TOP = -5;
+    int const ALIEN_COLLISION_LEFT = -6;
+    int const ALIEN_COLLISION_TOP = -6;
     if (!player_bullet.alive) return;
 
     for (int y = 0; y < ALIEN_ROW; y++) {
@@ -195,7 +194,7 @@ static void collide_alien_bullets(void) {
         if (!alien_bullets[i].alive) continue;
 
         // vs player
-        if (between(player.x - alien_bullets[i].x, -10, 10) &&
+        if (between(player.x - alien_bullets[i].x, -14, 14) &&
             alien_bullets[i].y - player.y > 20) {
             kill_alien_bullet(i);
             player.lives -= 1;
@@ -471,12 +470,7 @@ int main(int argc, char * argv[]){
                 new_line = false;
                 }
             // new level
-			if(alien_end < alien_start){
-				alien_level_up();
-                alien_speed = ALIEN_START_SPEED + (player.level*5);
-                player.level ++;
 
-			}
         }
         
 

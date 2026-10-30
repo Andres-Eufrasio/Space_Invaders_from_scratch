@@ -21,6 +21,7 @@ rectangle calculate_square_from_center(float ox, float oy, int w, int h);
 #define BULLET_SPEED 10
 #define BULLET_HEIGHT 20
 #define BULLET_WIDTH 3
+#define ALIEN_START_SPEED 750
 
 void create_aliens();
 void update_alien_length();

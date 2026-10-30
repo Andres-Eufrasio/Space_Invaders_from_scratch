@@ -1,4 +1,5 @@
 #include "aliens.h"
+#include "main.h"
 
 #include <SDL2/SDL_stdinc.h>
 #include <stdbool.h>
@@ -144,7 +145,8 @@ void create_aliens(void)
             aliens[row][col] = (Alien){
                 alien_x,
                 alien_y,
-                true
+                true,
+                top
             };
             if (row == 0) aliens[row][col].species = top;
             else if (row > 2) aliens[row][col].species = bottom;
@@ -164,6 +166,11 @@ void create_aliens(void)
 }
 
 void alien_level_up(){
+    extern int alien_speed;
+    extern Player player;
+
+    alien_speed = ALIEN_START_SPEED + (player.level*5);
+    player.level ++;
 
     alien_start = 0;
     alien_end = ALIEN_COL - 1;
@@ -456,7 +463,7 @@ void update_alien_length(void){
     }
     // no aliens left: leave the bounds crossed so main starts a new level
     if (alien_start > alien_end) {
-        alien_end = alien_start - 1;
+        alien_level_up();
     }
 };
 
