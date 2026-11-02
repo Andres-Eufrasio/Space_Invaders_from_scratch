@@ -23,6 +23,13 @@ enum {
 };
 
 
+enum GAMESTATE{
+    GAME_START_STATE,
+    MENU_STATE,
+    GAME_RUNNING_STATE
+};
+
+
 /*A Space invaders clone built from scratch
 By Andres Eufrasio Tinajero
 created 06/02/06
@@ -194,7 +201,7 @@ static void collide_alien_bullets(void) {
         if (!alien_bullets[i].alive) continue;
 
         // vs player
-        if (between(player.x - alien_bullets[i].x, -14, 14) &&
+        if (between(player.x - alien_bullets[i].x, -15, 15) &&
             alien_bullets[i].y - player.y > 20) {
             kill_alien_bullet(i);
             player.lives -= 1;
@@ -215,6 +222,11 @@ static void collide_alien_bullets(void) {
 
 // both kinds of bullets vs shield blocks
 static void collide_shields(void) {
+    // used to determine explosion type
+    enum{
+        _player_bullet,
+        _aline_bullet
+    };
     for (int s = 0; s < NUMBER_OF_SHIELDS; s++) {
         for (int y = 0; y < SHIELD_HEIGHT; y++) {
             for (int x = 0; x < SHIELD_WIDTH; x++) {
@@ -229,7 +241,7 @@ static void collide_shields(void) {
                         alien_bullets[i].y - b->y > 2) {
                         b->alive = false;
                         kill_alien_bullet(i);
-                        shield_explosion(s, x, y);
+                        shield_explosion(s, x, y, _aline_bullet);
                         break;
                     }
                 }
@@ -241,7 +253,7 @@ static void collide_shields(void) {
                     b->y - player_bullet.y >= 1) {
                     b->alive = false;
                     player_bullet.alive = false;
-                    shield_explosion(s, x, y);
+                    shield_explosion(s, x, y, _player_bullet);
                 }
             }
         }
@@ -296,6 +308,33 @@ void render_characters(SDL_Renderer *renderer, int x, int y, const char *text){
                             y + row * CHARACTER_PIXEL_SIZE,
                             CHARACTER_PIXEL_SIZE,
                             CHARACTER_PIXEL_SIZE
+                        };
+                        SDL_RenderFillRect(renderer, &pixel);
+                    }
+                }
+            }
+        }
+
+        cursor_x += (SPRITE_SIZE * CHARACTER_PIXEL_SIZE) + CHARACTER_SPACING;
+    }
+}
+
+
+void render_charactersEx(SDL_Renderer *renderer, int x, int y, const char *text, int pixel_size ){
+    int cursor_x = x;
+
+    for (const char *c = text; *c != '\0'; c++){
+        const char **sprite = find_character_sprite(*c);
+
+        if (sprite != NULL){
+            for (int row = 0; row < SPRITE_SIZE; row++){
+                for (int col = 0; col < SPRITE_SIZE; col++){
+                    if (sprite[row][col] == '1'){
+                        SDL_Rect pixel = {
+                            cursor_x + col * pixel_size,
+                            y + row * pixel_size,
+                            pixel_size,
+                            pixel_size
                         };
                         SDL_RenderFillRect(renderer, &pixel);
                     }
@@ -383,6 +422,7 @@ int main(int argc, char * argv[]){
     Uint32 lastFrameTime = 0;
     bool new_line = false;
     alien_speed = ALIEN_START_SPEED;
+    enum GAMESTATE game_state = GAME_RUNNING_STATE;
     
     while(1){
         SDL_Event e;
@@ -435,90 +475,95 @@ int main(int argc, char * argv[]){
                     break;
             }
         }
-
         if (plyrQUIT){
             break;
+        }       
+        if (game_state == MENU_STATE) {
+            render_background(renderer);
+
+
         }
 
-        // calc for player/screen boundry
-        if (player.x<=25){
-            move_left_speed =0;
-        }
-        else{move_left_speed = PLAYER_MOVE_SPEED;}
-        if (player.x>WIDTH-30){
-            move_right_speed =0;
-        }
-        else{move_right_speed = PLAYER_MOVE_SPEED;}
-        
-
-        // start frame
-        Uint32 currentTime = SDL_GetTicks();
-
-        float dt = (currentTime - lastFrameTime) / 1000.0f;
-        lastFrameTime = currentTime;
-        
-        // update alien frame
-        if (currentTime - alien_frame_timer >= alien_speed){
-            alien_frame = !alien_frame;
-            alien_frame_timer = currentTime;
+        if (game_state == GAME_RUNNING_STATE) {
             
-            if (!new_line){
-                new_line = update_alien_position(new_line);
+            // calc for player/screen boundry
+            if (player.x<=25){
+                move_left_speed =0;
             }
-            else{ 
-                new_line = update_alien_position(new_line);
-                new_line = false;
-                }
-            // new level
-
-        }
-        
-
-        // update based on button presses
-        if (plyrctrl.shoot){
-            player_shoot();
-        }
-        if (plyrctrl.left){
-            player.x-=move_left_speed*dt;
-        }
-        if (plyrctrl.right){
-            player.x+=move_right_speed*dt; 
-        }
-        collision();
-        SDL_SetRenderTarget(renderer, texture);
-        //SDL_RenderClear(renderer);
-
-        
-        render_background(renderer);
-
-        //Score rendering
-        SDL_SetRenderDrawColor(renderer,0,255,255,255);
-        render_topbar(renderer);
-        render_character(renderer, TOPBAR_SCORE_X, TOPBAR_LABEL_Y, "<SCORE>  <High score>  <Level>");       
-        render_bottombar(renderer);
-        render_player_lives(renderer);
+            else{move_left_speed = PLAYER_MOVE_SPEED;}
+            if (player.x>WIDTH-30){
+                move_right_speed =0;
+            }
+            else{move_right_speed = PLAYER_MOVE_SPEED;}
             
-        if(does_alien_shoot()){
-            alien_shoot();
+
+            // start frame
+            Uint32 currentTime = SDL_GetTicks();
+
+            float dt = (currentTime - lastFrameTime) / 1000.0f;
+            lastFrameTime = currentTime;
+            
+            // update alien frame
+            if (currentTime - alien_frame_timer >= alien_speed){
+                alien_frame = !alien_frame;
+                alien_frame_timer = currentTime;
+                
+                if (!new_line){
+                    new_line = update_alien_position(new_line);
+                }
+                else{ 
+                    new_line = update_alien_position(new_line);
+                    new_line = false;
+                    }
+                // new level
+
+            }
+            
+
+            // update based on button presses
+            if (plyrctrl.shoot){
+                player_shoot();
+            }
+            if (plyrctrl.left){
+                player.x-=move_left_speed*dt;
+            }
+            if (plyrctrl.right){
+                player.x+=move_right_speed*dt; 
+            }
+            collision();
+            SDL_SetRenderTarget(renderer, texture);
+            //SDL_RenderClear(renderer);
+
+            
+            render_background(renderer);
+
+            //Score rendering
+            SDL_SetRenderDrawColor(renderer,0,255,255,255);
+            render_topbar(renderer);
+            render_character(renderer, TOPBAR_SCORE_X, TOPBAR_LABEL_Y, "<SCORE>  <High score>  <Level>");       
+            render_bottombar(renderer);
+            render_player_lives(renderer);
+                
+            if(does_alien_shoot()){
+                alien_shoot();
+            }
+            update_alien_bullet(renderer);
+            update_player_bullet(renderer);
+            render_aliens(renderer);
+            render_shields(renderer);
+            
+            render_player(renderer);
+
+            SDL_SetRenderTarget(renderer, NULL);
+            
+            SDL_RenderCopy(renderer, texture, NULL , NULL);
+            SDL_RenderPresent(renderer);
+
+            Uint32 frameTime = SDL_GetTicks() - currentTime;
+            if (frameTime < FRAME_TIME){
+                SDL_Delay(FRAME_TIME - frameTime);
+            }
         }
-        update_alien_bullet(renderer);
-        update_player_bullet(renderer);
-        render_aliens(renderer);
-        render_shields(renderer);
-        
-        render_player(renderer);
-
-        SDL_SetRenderTarget(renderer, NULL);
-        
-        SDL_RenderCopy(renderer, texture, NULL , NULL);
-        SDL_RenderPresent(renderer);
-
-        Uint32 frameTime = SDL_GetTicks() - currentTime;
-        if (frameTime < FRAME_TIME){
-            SDL_Delay(FRAME_TIME - frameTime);
-        }
-
-
     }
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);

@@ -429,7 +429,7 @@ void update_alien_bullet(SDL_Renderer * renderer){
             continue;
         }
         alien_bullets[i].y += BULLET_SPEED/2.0;
-        if (alien_bullets[i].y > HEIGHT - 10){
+        if (alien_bullets[i].y > HEIGHT - 70){
             alien_bullets[i].alive = false;
             alien_bullet_count--;
             }

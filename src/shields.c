@@ -73,19 +73,32 @@ void init_shields()
     kill_shield_top_init();
     kill_shield_bottom_init();
 }
+// origin stands for player or alien, player = 0, alien = 1 
+void shield_explosion(int shield, int x, int y, int origin) {
+    // changes how shield explosion work depending on origin
+    if (origin == 0) {
+        // 7 is arbitrary number to determine explosion size
+        for (int i = 0; i < 7; i++) {
+            // random number between -5 and -5
+            int random_x = x + (rand() % 5) - 5;
+            int random_y = y + (rand() % 5) - 5;
+            // bounds check
+            if (random_x < SHIELD_WIDTH && random_x > 0 &&
+                random_y < SHIELD_HEIGHT && random_y > 0) {
 
-void shield_explosion(int shield ,int x, int y){
-    for (int i = 0; i<10; i++){
-        // random number between -10 and 10
-        int random_x = x + (rand()%5) - 4;
-        int random_y = y + (rand()%5) - 4;
-        if (random_x <= SHIELD_WIDTH && random_x >= 0 &&
-            random_y <= SHIELD_HEIGHT&& random_y >= 0){
-
-                    shields[shield][random_x][random_y].alive = false;
+                shields[shield][random_x][random_y].alive = false;
             }
-
-
+        }
+    } 
+    else {
+        for (int i = 0; i < 13; i++) {
+            int random_x = x + (rand() % 5) - 4;
+            int random_y = y + (rand() % 5);
+            if (random_x <= SHIELD_WIDTH && random_x >= 0 &&
+                random_y <= SHIELD_HEIGHT && random_y >= 0) {
+                shields[shield][random_x][random_y].alive = false;
+            }
+        }
     }
 }
 
