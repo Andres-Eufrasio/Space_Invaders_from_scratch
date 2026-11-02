@@ -1,9 +1,8 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include <stdbool.h>
 #include "aliens.h"
-
+#include <stdbool.h>
 
 extern Alien **aliens;
 extern AlienBullet *alien_bullets;
@@ -13,15 +12,14 @@ extern int alien_end;
 extern int alien_frame;
 extern Uint32 alien_frame_timer;
 
-typedef struct
-{
-    float x;
-    float y;
-    int lives;
-    int score;
-    int level;
-}Player;
-  
+typedef struct {
+  float x;
+  float y;
+  int lives;
+  int score;
+  int level;
+} Player;
+
 /*
 Species list
 depressed alien
@@ -30,32 +28,27 @@ squid alien
 mothership
 */
 
+typedef struct {
+  float x;
+  float y;
+  bool alive;
+} PlayerBullet;
 
-typedef struct
-{
-    float x;
-    float y;
-    bool alive;
-}PlayerBullet;
+typedef struct Controller {
+  bool left;
+  bool right;
+  bool up;
+  bool down;
+} Controller;
 
-typedef struct Controller{
-    bool left;
-    bool right;
-    bool shoot;
-}Controller;
+typedef struct {
+  float x;
+  float y;
+} defence_block;
 
-typedef struct
-{
-    float x;
-    float y;
-}defence_block;
+typedef struct {
+  int points;
 
-typedef struct
-{
-    int points;
-
-}score;
-
-
+} score;
 
 #endif

@@ -1,6 +1,8 @@
+#include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_surface.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +12,7 @@
 #include "main.h"
 #include "aliens.h"
 #include "render.h"
-#include "shield.h"
+#include "shields.h"
 #include "characters.c"
 
 
@@ -320,7 +322,7 @@ void render_characters(SDL_Renderer *renderer, int x, int y, const char *text){
 }
 
 
-void render_charactersEx(SDL_Renderer *renderer, int x, int y, const char *text, int pixel_size ){
+void render_charactersEx(SDL_Renderer *renderer, int x, int y, const char *text, int pixel_size, int pixel_spacing){
     int cursor_x = x;
 
     for (const char *c = text; *c != '\0'; c++){
@@ -342,7 +344,7 @@ void render_charactersEx(SDL_Renderer *renderer, int x, int y, const char *text,
             }
         }
 
-        cursor_x += (SPRITE_SIZE * CHARACTER_PIXEL_SIZE) + CHARACTER_SPACING;
+        cursor_x += (SPRITE_SIZE * pixel_size) + pixel_spacing;
     }
 }
 
@@ -350,21 +352,26 @@ void render_character(SDL_Renderer *renderer, int x, int y, const char *text){
     render_characters(renderer, x, y, text);
 }
 
-static int center_text_x(int section_x, const char *section_label, const char *text){
+static int center_text_onString(int section_x, const char *section_label, const char *text){
     int section_width = (int)strlen(section_label) * CHARACTER_ADVANCE - CHARACTER_SPACING;
     int text_width = (int)strlen(text) * CHARACTER_ADVANCE - CHARACTER_SPACING;
     return section_x + (section_width - text_width) / 2;
 }
 
+static int center_text_onWidth(int start, int end, const char * text, int pixel_size, int spacing){
+    int text_width = (int)strlen(text) * ((SPRITE_SIZE * pixel_size) + spacing);
+    return start + (end - start - text_width) / 2;
+}
+
 void render_high_score(SDL_Renderer * renderer){
     char current_score[32];
     snprintf(current_score, sizeof(current_score), "%d", player.score);
-    render_character(renderer, center_text_x(TOPBAR_HIGH_SCORE_X, "<High score>", current_score), TOPBAR_VALUE_Y, current_score);
+    render_character(renderer, center_text_onString(TOPBAR_HIGH_SCORE_X, "<High score>", current_score), TOPBAR_VALUE_Y, current_score);
 }
 void render_level(SDL_Renderer * renderer){
     char current_level[32];
     snprintf(current_level, sizeof(current_level), "%d", player.level);
-    render_character(renderer, center_text_x(TOPBAR_LEVEL_X, "<Level>", current_level), TOPBAR_VALUE_Y, current_level);
+    render_character(renderer, center_text_onString(TOPBAR_LEVEL_X, "<Level>", current_level), TOPBAR_VALUE_Y, current_level);
     
 }
 void render_topbar(SDL_Renderer * renderer){
@@ -372,7 +379,7 @@ void render_topbar(SDL_Renderer * renderer){
     char current_score[32];
     snprintf(current_score, sizeof(current_score), "%d", player.score);
 
-    render_character(renderer, center_text_x(TOPBAR_SCORE_X, "<SCORE>", current_score), TOPBAR_VALUE_Y, current_score);
+    render_character(renderer, center_text_onString(TOPBAR_SCORE_X, "<SCORE>", current_score), TOPBAR_VALUE_Y, current_score);
     render_high_score(renderer);
     render_level(renderer);
 }
@@ -384,7 +391,45 @@ void render_bottombar(SDL_Renderer * renderer){
     SDL_RenderFillRect(renderer, &bottombar_line);
     SDL_RenderDrawRect(renderer, &bottombar_line);
 }
+enum Cursor{
+    Resume,
+    Options,
+    Exit,
+};
+enum Cursor cursor = Exit;
+void render_menu(SDL_Renderer * renderer){
+    int pixel_size = 5;
+    int spacing = 4;
+    int cursor_middle_offset = 200;
+    SDL_Rect cursor_bar = { (WIDTH/2) - (cursor_middle_offset/2), 50, cursor_middle_offset, 5};
+    
 
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    if (cursor == Resume) {
+        SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+        cursor_bar.y = HEIGHT/2 - 75;
+    }
+    render_charactersEx(renderer, center_text_onWidth(0, WIDTH, "Resume", pixel_size, spacing), HEIGHT/2 -100, "Resume", pixel_size, spacing);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    if (cursor == Options) {
+        SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+        cursor_bar.y = HEIGHT/2 + 25;
+    }
+    render_charactersEx(renderer, center_text_onWidth(0, WIDTH, "Options", pixel_size, spacing), HEIGHT/2 , "Options", pixel_size, spacing);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    if (cursor == Exit) {
+        SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+        cursor_bar.y = HEIGHT/2 + 125;
+        cursor_middle_offset = 110;
+        // -5 required because of integer division
+        cursor_bar.x = (WIDTH/2) - (cursor_middle_offset/2)-5;
+        cursor_bar.w = cursor_middle_offset;
+    }
+   
+    render_charactersEx(renderer, center_text_onWidth(0, WIDTH, "Exit", pixel_size, spacing), HEIGHT/2 + 100, "Exit", pixel_size, spacing);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+    SDL_RenderFillRect(renderer, &cursor_bar);
+}
 
 int main(int argc, char * argv[]){
     srand(time(0));
@@ -411,7 +456,7 @@ int main(int argc, char * argv[]){
     create_aliens();
     init_alien_bullets();
     init_shields();
-    Controller plyrctrl = {false, false, false};
+    Controller plyrctrl = {false, false, false, false};
     bool plyrQUIT = false;
     int shoot_time = 0;
     int move_left_speed=PLAYER_MOVE_SPEED;
@@ -422,7 +467,7 @@ int main(int argc, char * argv[]){
     Uint32 lastFrameTime = 0;
     bool new_line = false;
     alien_speed = ALIEN_START_SPEED;
-    enum GAMESTATE game_state = GAME_RUNNING_STATE;
+    enum GAMESTATE game_state = MENU_STATE;
     
     while(1){
         SDL_Event e;
@@ -448,7 +493,10 @@ int main(int argc, char * argv[]){
 
                         case SDLK_SPACE:
                         case SDLK_UP:
-                            plyrctrl.shoot = true;
+                            plyrctrl.up = true;
+                            break;
+                        case SDLK_DOWN:
+                            plyrctrl.down = true;
                             break;
 
                         case SDLK_ESCAPE:
@@ -469,7 +517,10 @@ int main(int argc, char * argv[]){
 
                         case SDLK_SPACE:
                         case SDLK_UP:
-                            plyrctrl.shoot = false;
+                            plyrctrl.up = false;
+                            break;
+                        case SDLK_DOWN:
+                            plyrctrl.down = false;
                             break;
                     }
                     break;
@@ -477,11 +528,28 @@ int main(int argc, char * argv[]){
         }
         if (plyrQUIT){
             break;
-        }       
+        }      
         if (game_state == MENU_STATE) {
+            SDL_SetRenderTarget(renderer, texture);
             render_background(renderer);
+            render_menu(renderer);
+            SDL_SetRenderTarget(renderer, NULL);
+            SDL_RenderCopy(renderer, texture, NULL , NULL);
+            SDL_RenderPresent(renderer);
+            
+            if(plyrctrl.up){
+                if (cursor > 0){
+                    cursor --;
+                }
+            }
+            if(plyrctrl.down){
+                if (cursor < 2){
+                    cursor ++;
+                }
 
+            }
 
+            printf("%d",cursor);
         }
 
         if (game_state == GAME_RUNNING_STATE) {
@@ -521,7 +589,7 @@ int main(int argc, char * argv[]){
             
 
             // update based on button presses
-            if (plyrctrl.shoot){
+            if (plyrctrl.up){
                 player_shoot();
             }
             if (plyrctrl.left){
