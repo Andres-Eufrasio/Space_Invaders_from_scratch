@@ -5,7 +5,7 @@ This is a clone of the classic 1979 space invaders game. This clone uses only th
 sdl2
 
 ## how to run
-make run
-- it will automatically detect if you are in windows or linux
+`make run` - it will automatically detect if you are in windows or linux
+
 
 
