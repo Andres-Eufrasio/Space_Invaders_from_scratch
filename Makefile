@@ -5,7 +5,7 @@ TARGET    := space_invaders
 SRC_DIR   := src
 BUILD_DIR := build
 
-SRCS := main.c aliens.c shields.c hashmap.c
+SRCS := main.c aliens.c shields.c
 OBJS := $(addprefix $(BUILD_DIR)/,$(SRCS:.c=.o))
 DEPS := $(OBJS:.o=.d)
 
@@ -82,3 +82,33 @@ clean:
 	$(call RM_FILE,$(WIN_TARGET))
 
 -include $(DEPS) $(WIN_DEPS)
+
+
+# --- Tiny Windows build ---------------------------------------------
+WIN_TINY_TARGET    := space_invaders_tiny.exe
+WIN_TINY_BUILD_DIR := $(BUILD_DIR)/tiny
+WIN_TINY_OBJS      := $(addprefix $(WIN_TINY_BUILD_DIR)/,$(SRCS:.c=.o))
+WIN_TINY_DEPS      := $(WIN_TINY_OBJS:.o=.d)
+
+WIN_TINY_CFLAGS := -std=c11 -Wall -Wextra -Oz -flto \
+                   -ffunction-sections -fdata-sections
+
+WIN_TINY_LDFLAGS := $(WIN_LDFLAGS) -flto -Wl,--gc-sections -s
+
+.PHONY: tiny run-tiny
+
+tiny: $(WIN_TINY_TARGET)
+
+run-tiny: $(WIN_TINY_TARGET)
+	cmd /C $(WIN_TINY_TARGET)
+
+$(WIN_TINY_TARGET): $(WIN_TINY_OBJS)
+	$(WIN_CC) $(WIN_TINY_LDFLAGS) -o $@ $^ $(WIN_LDLIBS)
+
+$(WIN_TINY_BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(WIN_TINY_BUILD_DIR)
+	$(WIN_CC) $(WIN_CPPFLAGS) $(WIN_TINY_CFLAGS) -MMD -MP -c $< -o $@
+
+$(WIN_TINY_BUILD_DIR):
+	cmd /C "if not exist $(subst /,\,$@) mkdir $(subst /,\,$@)"
+
+-include $(WIN_TINY_DEPS)
